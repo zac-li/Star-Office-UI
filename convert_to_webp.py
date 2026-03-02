@@ -9,8 +9,7 @@ import os
 from PIL import Image
 
 # 路径
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
+FRONTEND_DIR = "/root/.openclaw/workspace/star-office-ui/frontend"
 STATIC_DIR = os.path.join(FRONTEND_DIR, "")
 
 # 文件分类配置

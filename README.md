@@ -31,7 +31,7 @@ cd backend
 python3 app.py
 ```
 
-打开：**http://127.0.0.1:19000**
+打开：**http://127.0.0.1:18791**
 
 切状态试试（在项目根目录执行）：
 ```bash
@@ -105,7 +105,7 @@ cd backend
 python3 app.py
 ```
 
-打开：`http://127.0.0.1:19000`
+打开：`http://127.0.0.1:18791`
 
 ### 4) 切换主 Agent 状态（示例）
 
@@ -254,7 +254,7 @@ cd backend
 python3 app.py
 ```
 
-Open: **http://127.0.0.1:19000**
+Open: **http://127.0.0.1:18791**
 
 Try changing states (run from project root):
 ```bash
@@ -328,7 +328,7 @@ cd backend
 python3 app.py
 ```
 
-Open: `http://127.0.0.1:19000`
+Open: `http://127.0.0.1:18791`
 
 ### 4) Switch main Agent status (example)
 

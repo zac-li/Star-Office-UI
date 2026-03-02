@@ -3,14 +3,10 @@
 
 from flask import Flask, jsonify, send_from_directory, make_response, request
 from datetime import datetime, timedelta
-from urllib.parse import urlparse
-import hmac
-import html as html_mod
 import json
 import os
 import re
 import threading
-import uuid
 
 # Paths (project-relative, no hardcoded absolute paths)
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,12 +16,6 @@ STATE_FILE = os.path.join(ROOT_DIR, "state.json")
 AGENTS_STATE_FILE = os.path.join(ROOT_DIR, "agents-state.json")
 JOIN_KEYS_FILE = os.path.join(ROOT_DIR, "join-keys.json")
 
-# Security/validation knobs
-OFFICE_SET_STATE_TOKEN = (os.environ.get("OFFICE_SET_STATE_TOKEN") or os.environ.get("OFFICE_STATUS_SYNC_TOKEN") or "").strip()
-MAX_DETAIL_LEN = int(os.environ.get("OFFICE_MAX_DETAIL_LEN", "200"))
-MAX_NAME_LEN = int(os.environ.get("OFFICE_MAX_NAME_LEN", "50"))
-CONTROL_CHAR_RE = re.compile(r"[\x00-\x1f\x7f]")
-
 
 def get_yesterday_date_str():
     """获取昨天的日期字符串 YYYY-MM-DD"""
@@ -33,92 +23,25 @@ def get_yesterday_date_str():
     return yesterday.strftime("%Y-%m-%d")
 
 
-def clean_text(value, max_len=200):
-    """输入清洗：去控制字符、去首尾空格、限长、转义HTML实体。"""
-    if value is None:
-        return ""
-    text = str(value)
-    text = CONTROL_CHAR_RE.sub("", text).strip()
-    text = html_mod.escape(text)
-    if len(text) > max_len:
-        text = text[:max_len]
-    return text
-
-
-def get_trace_id():
-    return (request.headers.get("X-Trace-Id") or "").strip() or f"office-{uuid.uuid4().hex[:10]}"
-
-
-def log_event(level, message, **fields):
-    payload = {
-        "ts": datetime.now().isoformat(),
-        "level": level,
-        "message": message,
-    }
-    payload.update(fields)
-    try:
-        print(json.dumps(payload, ensure_ascii=False), flush=True)
-    except Exception:
-        print(f"[{level}] {message} {fields}", flush=True)
-
-
-def is_same_origin_request():
-    """Allow browser same-origin requests (e.g. local control panel buttons)."""
-    req_host = (request.host or "").lower()
-    origin = request.headers.get("Origin") or request.headers.get("Referer")
-    if not origin:
-        return False
-    try:
-        parsed = urlparse(origin)
-        return (parsed.netloc or "").lower() == req_host
-    except Exception:
-        return False
-
-
-def is_loopback_remote():
-    addr = (request.remote_addr or "").strip()
-    return addr in {"127.0.0.1", "::1", "localhost"}
-
-
-def is_set_state_authorized():
-    """Authorize set_state: same-origin browser OR token OR local loopback fallback."""
-    if is_same_origin_request():
-        return True, "same-origin"
-
-    token = (request.headers.get("X-Office-Token") or "").strip()
-    if OFFICE_SET_STATE_TOKEN and token and hmac.compare_digest(token, OFFICE_SET_STATE_TOKEN):
-        return True, "token"
-
-    # Backward compatibility: keep local loopback calls working even if token is unset.
-    if not OFFICE_SET_STATE_TOKEN and is_loopback_remote():
-        return True, "loopback-no-token"
-
-    return False, "unauthorized"
-
-
 def sanitize_content(text):
     """清理内容，保护隐私"""
     import re
-
+    
     # 移除 OpenID、User ID 等
     text = re.sub(r'ou_[a-f0-9]+', '[用户]', text)
     text = re.sub(r'user_id="[^"]+"', 'user_id="[隐藏]"', text)
-
+    
+    # 移除具体的人名（如果有的话）
+    # 这里可以根据需要添加更多规则
+    
     # 移除 IP 地址、路径等敏感信息
     text = re.sub(r'/root/[^"\s]+', '[路径]', text)
     text = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', '[IP]', text)
-
-    # 移除邮箱
+    
+    # 移除电话号码、邮箱等
     text = re.sub(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', '[邮箱]', text)
-
-    # 补充敏感信息类型（身份证 / 银行卡 / JWT）
-    text = re.sub(r'\b\d{17}[\dXx]\b', '[身份证]', text)
-    text = re.sub(r'\b\d{16,19}\b', '[银行卡]', text)
-    text = re.sub(r'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9._-]+\.[A-Za-z0-9._-]+', '[JWT]', text)
-
-    # 最后处理手机号，避免误伤身份证串
-    text = re.sub(r'\b1[3-9]\d{9}\b', '[手机号]', text)
-
+    text = re.sub(r'1[3-9]\d{9}', '[手机号]', text)
+    
     return text
 
 
@@ -164,10 +87,8 @@ def extract_memo_from_file(file_path):
             "「纸上得来终觉浅，绝知此事要躬行。」"
         ]
         
-        # Use date-based index so the same quote shows all day (no jitter on poll)
-        today = datetime.now().strftime("%Y%m%d")
-        quote_index = int(today) % len(wisdom_quotes)
-        quote = wisdom_quotes[quote_index]
+        import random
+        quote = random.choice(wisdom_quotes)
         
         # 组合内容
         result = []
@@ -288,27 +209,9 @@ def load_state():
 
 
 def save_state(state: dict):
-    """Save state to file and sync main agent in agents-state.json"""
+    """Save state to file"""
     with open(STATE_FILE, "w", encoding="utf-8") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
-    # Keep agents-state.json in sync for the main agent
-    _sync_main_agent_state(state)
-
-
-def _sync_main_agent_state(state: dict):
-    """Update the isMain=true entry in agents-state.json to match state.json"""
-    try:
-        agents = load_agents_state()
-        for a in agents:
-            if a.get("isMain"):
-                a["state"] = state.get("state", "idle")
-                a["detail"] = state.get("detail", "")
-                a["updated_at"] = state.get("updated_at", datetime.now().isoformat())
-                a["area"] = state_to_area(a["state"])
-                break
-        save_agents_state(agents)
-    except Exception:
-        pass
 
 
 # Initialize state
@@ -462,7 +365,6 @@ def get_agents():
 
     cleaned_agents = []
     keys_data = load_join_keys()
-    dirty = False  # only write to disk if something actually changed
 
     for a in agents:
         if a.get("isMain"):
@@ -485,7 +387,6 @@ def get_agents():
                             key_item["usedBy"] = None
                             key_item["usedByAgentId"] = None
                             key_item["usedAt"] = None
-                    dirty = True
                     continue
             except Exception:
                 pass
@@ -498,15 +399,13 @@ def get_agents():
                 age = (now - last_push_at).total_seconds()
                 if age > 300:  # 5分钟无推送自动离线
                     a["authStatus"] = "offline"
-                    dirty = True
             except Exception:
                 pass
 
         cleaned_agents.append(a)
 
-    if dirty:
-        save_agents_state(cleaned_agents)
-        save_join_keys(keys_data)
+    save_agents_state(cleaned_agents)
+    save_join_keys(keys_data)
 
     return jsonify(cleaned_agents)
 
@@ -581,10 +480,10 @@ def join_agent():
         if not isinstance(data, dict) or not data.get("name"):
             return jsonify({"ok": False, "msg": "请提供名字"}), 400
 
-        name = clean_text(data["name"], MAX_NAME_LEN)
+        name = data["name"].strip()
         state = data.get("state", "idle")
-        detail = clean_text(data.get("detail", ""), MAX_DETAIL_LEN)
-        join_key = clean_text(data.get("joinKey", ""), 128)
+        detail = data.get("detail", "")
+        join_key = data.get("joinKey", "").strip()
 
         # Normalize state early for compatibility
         state = normalize_agent_state(state)
@@ -780,16 +679,16 @@ def agent_push():
         if not isinstance(data, dict):
             return jsonify({"ok": False, "msg": "invalid json"}), 400
 
-        trace_id = get_trace_id()
-        agent_id = clean_text(data.get("agentId"), 128)
-        join_key = clean_text(data.get("joinKey"), 128)
-        state = clean_text(data.get("state"), 32)
-        detail = clean_text(data.get("detail"), MAX_DETAIL_LEN)
-        name = clean_text(data.get("name"), MAX_NAME_LEN)
+        agent_id = (data.get("agentId") or "").strip()
+        join_key = (data.get("joinKey") or "").strip()
+        state = (data.get("state") or "").strip()
+        detail = (data.get("detail") or "").strip()
+        name = (data.get("name") or "").strip()
 
         if not agent_id or not join_key or not state:
             return jsonify({"ok": False, "msg": "缺少 agentId/joinKey/state"}), 400
 
+        valid_states = {"idle", "writing", "researching", "executing", "syncing", "error"}
         state = normalize_agent_state(state)
 
         keys_data = load_join_keys()
@@ -828,17 +727,8 @@ def agent_push():
         target["lastPushAt"] = datetime.now().isoformat()
 
         save_agents_state(agents)
-        log_event(
-            "info",
-            "agent_push_ok",
-            traceId=trace_id,
-            agentId=agent_id,
-            state=state,
-            source="remote-openclaw",
-        )
         return jsonify({"ok": True, "agentId": agent_id, "area": target.get("area")})
     except Exception as e:
-        log_event("error", "agent_push_failed", error=str(e))
         return jsonify({"ok": False, "msg": str(e)}), 500
 
 
@@ -897,40 +787,22 @@ def get_yesterday_memo():
 @app.route("/set_state", methods=["POST"])
 def set_state_endpoint():
     """Set state via POST (for UI control panel)"""
-    trace_id = get_trace_id()
     try:
-        ok, reason = is_set_state_authorized()
-        if not ok:
-            log_event("warn", "set_state_denied", traceId=trace_id, reason=reason, remote=request.remote_addr)
-            return jsonify({"status": "error", "msg": "unauthorized"}), 401
-
         data = request.get_json()
         if not isinstance(data, dict):
             return jsonify({"status": "error", "msg": "invalid json"}), 400
-
         state = load_state()
         if "state" in data:
-            s = normalize_agent_state(data["state"])
+            s = data["state"]
             valid_states = {"idle", "writing", "researching", "executing", "syncing", "error"}
             if s in valid_states:
                 state["state"] = s
         if "detail" in data:
-            state["detail"] = clean_text(data["detail"], MAX_DETAIL_LEN)
-
+            state["detail"] = data["detail"]
         state["updated_at"] = datetime.now().isoformat()
         save_state(state)
-
-        log_event(
-            "info",
-            "set_state_ok",
-            traceId=trace_id,
-            auth=reason,
-            state=state.get("state"),
-            remote=request.remote_addr,
-        )
         return jsonify({"status": "ok"})
     except Exception as e:
-        log_event("error", "set_state_failed", traceId=trace_id, error=str(e))
         return jsonify({"status": "error", "msg": str(e)}), 500
 
 
@@ -938,9 +810,8 @@ if __name__ == "__main__":
     print("=" * 50)
     print("Star Office UI - Backend State Service")
     print("=" * 50)
-    OFFICE_PORT = int(os.environ.get("OFFICE_PORT", "19000"))
     print(f"State file: {STATE_FILE}")
-    print(f"Listening on: http://0.0.0.0:{OFFICE_PORT}")
+    print("Listening on: http://0.0.0.0:18791")
     print("=" * 50)
     
-    app.run(host="0.0.0.0", port=OFFICE_PORT, debug=False)
+    app.run(host="0.0.0.0", port=18791, debug=False)

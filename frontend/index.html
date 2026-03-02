@@ -508,7 +508,7 @@
                 
                 if (data.success && data.memo) {
                     memoDate.textContent = data.date || '';
-                    memoContent.textContent = data.memo;
+                    memoContent.innerHTML = data.memo.replace(/\n/g, '<br>');
                 } else {
                     memoContent.innerHTML = '<div id="memo-placeholder">暂无昨日日记</div>';
                 }
@@ -789,7 +789,7 @@
             }
 
             list.innerHTML = visitors.map(agent => {
-                const name = (agent.name || '未命名访客').replace(/[<>"'&]/g, c => ({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c]));
+                const name = agent.name || '未命名访客';
                 const authStatus = agent.authStatus || 'pending';
                 const state = agent.state || 'idle';
                 const statusMap = {

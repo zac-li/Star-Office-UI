@@ -18,14 +18,15 @@
    - 下载或复制 `office-agent-push.py`（可以访问：https://office.example.com/static/office-agent-push.py）
    - **最简单推荐**：直接运行脚本（已内置 state.json 自动发现）
      - 会自动尝试以下路径：
-       - `脚本同目录/state.json`
+       - `/root/.openclaw/workspace/star-office-ui/state.json`
+       - `/root/.openclaw/workspace/state.json`
        - `当前工作目录/state.json`
        - `脚本同目录/state.json`
    - 若你的环境路径特殊，再手动指定：
      - `OFFICE_LOCAL_STATE_FILE=/你的/state.json/路径`
    - 如果你不方便提供 state 文件，再用 /status 鉴权方式：
      - `OFFICE_LOCAL_STATUS_TOKEN=<你的token>`
-     - （可选）`OFFICE_LOCAL_STATUS_URL=http://127.0.0.1:19000/status`
+     - （可选）`OFFICE_LOCAL_STATUS_URL=http://127.0.0.1:18791/status`
    - 填入配置后运行
 
 3. 脚本会自动：
