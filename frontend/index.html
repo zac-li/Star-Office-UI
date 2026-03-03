@@ -28,12 +28,12 @@
         #main-stage {
             position: relative;
             width: 1280px;
-            transition: margin-left .25s ease;
-            will-change: margin-left;
+            transition: transform .25s ease;
+            will-change: transform;
         }
         body.drawer-open #main-stage {
-            /* 右侧紧贴侧边栏左缘，避免出现大空隙 */
-            margin-left: max(0px, calc(100vw - min(420px, 92vw) - 1280px));
+            /* 与右侧抽屉并列：按视口动态左移，确保与抽屉至少保留 20px 间隔 */
+            transform: translateX(calc(-1 * max(0px, (min(320px, 92vw) + 20px) - ((100vw - 1280px) / 2))));
         }
         #bottom-panels {
             display: flex;
