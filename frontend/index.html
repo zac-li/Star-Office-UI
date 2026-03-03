@@ -375,21 +375,28 @@
         #gemini-api-doc-link:hover { color:#bbf7d0; }
 
 
-        #asset-move-panel { border:0; background:transparent; border-radius:0; padding:10px 0 12px; margin-bottom:10px; border-bottom: 1px solid rgba(148, 163, 184, 0.18); }
+        #asset-move-panel { border:0; background:transparent; border-radius:0; padding:12px 0 12px; margin-bottom:10px; border-bottom: 1px solid rgba(148, 163, 184, 0.18); display:flex; flex-direction:column; justify-content:center; gap:8px; }
         #asset-home-actions-panel { border:0; background:transparent; border-radius:0; padding:12px 0 12px; border-bottom: 1px solid rgba(148, 163, 184, 0.18); }
         #asset-manual-panel {
             border-top: 0;
             padding-top: 10px;
             margin-top: 10px;
         }
-        #asset-home-actions-panel .asset-toolbar { display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
-        #asset-home-actions-panel .asset-toolbar > button { width:100%; margin:0; }
-        #asset-move-row { justify-content: center; gap:12px; margin-bottom:0; }
+        #asset-home-actions-panel .asset-toolbar,
+        #asset-move-row,
+        #asset-broker-row {
+            display:grid;
+            grid-template-columns: 1fr 1fr;
+            gap:8px;
+            margin:0;
+        }
+        #asset-home-actions-panel .asset-toolbar > button { width:100%; margin:0; min-height:42px; }
         #asset-move-row .btn-move,
         #asset-move-row .btn-home,
         #asset-broker-row .btn-broker,
         #asset-broker-row .btn-diy {
-            width:122px;
+            width:100%;
+            min-width:0;
             height:42px;
             padding:8px 8px 0;
             border:none;
@@ -420,7 +427,6 @@
         #asset-move-row .btn-home {
             background-image:url('/static/btn-back-home-sprite.png?v={{VERSION_TIMESTAMP}}');
         }
-        #asset-broker-row { justify-content:center; gap:12px; margin-top:8px; margin-bottom:0; }
         #asset-broker-row .btn-broker {
             background-image:url('/static/btn-broker-sprite.png?v={{VERSION_TIMESTAMP}}');
         }
