@@ -26,8 +26,8 @@ const LAYOUT = {
   furniture: {
     // 沙发
     sofa: {
-      x: 670,
-      y: 144,
+      x: 1100,
+      y: 450,
       origin: { x: 0, y: 0 },
       depth: 10
     },
@@ -67,8 +67,8 @@ const LAYOUT = {
 
     // 海报
     poster: {
-      x: 252,
-      y: 66,
+      x: -1000,
+      y: -1000,
       depth: 4
     },
 

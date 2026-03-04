@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Star 的像素办公室</title>
+    <title>🧪 Gray Matter Technologies</title>
     <style>
         @font-face {
             font-family: 'ArkPixel';
@@ -60,7 +60,7 @@
             image-rendering: pixelated;
             /* 再兜底一次：即使外层高度变化，也不要拉伸变形 */
             object-fit: contain;
-            /* 边框改为直接贴合画布内部，避免“框比地图大” */
+            /* 边框改为直接贴合画布内部，避免"框比地图大" */
             box-shadow: inset 0 0 0 4px #64477d;
             position: relative;
             z-index: 10;
@@ -185,21 +185,35 @@
             border-bottom: 0;
         }
         #control-buttons {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 8px;
-            align-content: start;
-            padding-top: 4px;
-            padding-left: 10px;
-            padding-right: 10px;
+            display: flex;
+            gap: 6px;
+            padding: 4px 10px;
             box-sizing: border-box;
+            flex-wrap: wrap;
         }
-        #btn-open-drawer {
-            grid-column: 1 / -1;
-            background: #78a340;
-            border-color: #8fbe4a;
-            color: #f3ffe6;
-            font-weight: 700;
+        .state-pill {
+            font-family: ArkPixel, monospace;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.45);
+            border: 1px solid rgba(255,255,255,0.12);
+            cursor: default;
+            user-select: none;
+            transition: all 0.3s;
+        }
+        .state-pill.active {
+            background: rgba(120,220,80,0.25);
+            color: #b5ff6a;
+            border-color: rgba(120,220,80,0.5);
+            text-shadow: 0 0 6px rgba(120,220,80,0.4);
+        }
+        .state-pill[data-state="error"].active {
+            background: rgba(255,80,80,0.25);
+            color: #ff8a8a;
+            border-color: rgba(255,80,80,0.5);
+            text-shadow: 0 0 6px rgba(255,80,80,0.4);
         }
 
         #asset-drawer {
@@ -999,22 +1013,22 @@
 <body>
     <!-- 加载遮罩 -->
     <div id="loading-overlay">
-        <div id="loading-text">Loading Star’s pixel office...</div>
+        <div id="loading-text">正在加载 Walter 的 🧪 Gray Matter Technologies...</div>
         <div id="loading-progress-container">
             <div id="loading-progress-bar"></div>
         </div>
     </div>
-    
+
     <div id="main-stage">
         <div id="game-container">
             <div id="status-text">加载中...</div>
         </div>
-        
+
         <!-- 底部面板容器 -->
         <div id="bottom-panels">
         <!-- Memo 面板 -->
         <div id="memo-panel">
-            <div id="memo-title">昨 日 小 记</div>
+            <div id="memo-title">昨日实验记录</div>
             <div id="memo-date"></div>
             <div class="memo-decoration">─ ─ ─ ─ ─</div>
             <div id="memo-content">
@@ -1022,16 +1036,14 @@
             </div>
             <div class="memo-decoration">─ ─ ─ ─ ─</div>
         </div>
-        
+
         <!-- 状态控制栏 -->
         <div id="control-bar">
-            <div id="control-bar-title">Star 状态</div>
+            <div id="control-bar-title">Walt在干嘛</div>
             <div id="control-buttons">
-                <button id="btn-state-idle" onclick="setState('idle','待命')">待命</button>
-                <button id="btn-state-writing" onclick="setState('writing','工作中')">工作</button>
-                <button id="btn-state-syncing" onclick="setState('syncing','同步中')">同步</button>
-                <button id="btn-state-error" onclick="setState('error','报警中')">报警</button>
-                <button id="btn-open-drawer" onclick="toggleAssetDrawer()">装修房间</button>
+                <span class="state-pill" data-state="idle">待命</span>
+                <span class="state-pill" data-state="orchestrating">运筹帷幄</span>
+                <span class="state-pill" data-state="error">报警</span>
             </div>
         </div>
 
@@ -1044,7 +1056,7 @@
         </div>
     </div>
     </div>
-    
+
     <div id="asset-highlight"></div>
     <div id="room-loading-overlay" aria-live="polite" aria-busy="true">
         <div class="room-loading-inner">
@@ -1159,7 +1171,7 @@
         let uiLang = localStorage.getItem('uiLang') || 'en';
         const I18N = {
             zh: {
-                controlTitle: 'Star 状态',
+                controlTitle: 'Walt在干嘛',
                 btnIdle: '待命', btnWork: '工作', btnSync: '同步', btnError: '报警', btnDecor: '装修房间',
                 drawerTitle: '装修房间 · 资产侧边栏', drawerClose: '关闭',
                 authTitle: '请输入装修验证码', authPlaceholder: '输入验证码', authVerify: '验证', authDefaultPassHint: '默认密码：1234（可随时让我帮你改，建议改成强密码）',
@@ -1168,7 +1180,7 @@
                 assetHide: '隐藏', assetShow: '显示',
                 resetToDefault: '重置为默认资产', restorePrevAsset: '用上一版',
                 btnMove: '📦 搬新家', btnHome: '🐚 回老家', btnHomeLast: '↩️ 回上一个家', btnHomeFavorite: '⭐ 收藏这个家', btnBroker: '🤝 找中介', btnDIY: '🪚 自己装', btnBrokerGo: '听中介的',
-                homeFavTitle: '🏠 收藏的家', homeFavEmpty: '还没有收藏，先点“⭐ 收藏这个家”', homeFavApply: '替换到当前地图', homeFavSaved: '✅ 已收藏当前地图', homeFavApplied: '✅ 已替换为收藏地图',
+                homeFavTitle: '🏠 收藏的家', homeFavEmpty: '还没有收藏，先点"⭐ 收藏这个家"', homeFavApply: '替换到当前地图', homeFavSaved: '✅ 已收藏当前地图', homeFavApplied: '✅ 已替换为收藏地图',
                 brokerHint: '你会给龙虾推荐什么样的房子',
                 brokerPromptPh: '例如：故宫主题、莫奈风格、地牢主题、兵马俑主题……',
                 brokerNeedPrompt: '请先输入中介方案描述',
@@ -1183,11 +1195,11 @@
                 assetHintNotInScene: '当前场景未检测到此对象，仍可替换文件（刷新后生效）',
                 assetHintDefault: '通用素材：建议保持原图尺寸、透明通道与视觉重心一致，避免错位或失真',
                 showCoords: '显示坐标', hideCoords: '隐藏坐标', moveView: '移动视野', lockView: '锁定视野',
-                memoTitle: '昨 日 小 记', guestTitle: '访 客 列 表', officeTitle: '海辛小龙虾的办公室',
-                loadingOffice: '正在加载 Star 的像素办公室...'
+                memoTitle: '昨日实验记录', guestTitle: '绝命毒师宇宙', officeTitle: '🧪 Gray Matter Technologies',
+                loadingOffice: '正在加载 Walter 的 🧪 Gray Matter Technologies...'
             },
             en: {
-                controlTitle: 'Star Status',
+                controlTitle: 'What\u2019s up with Walter',
                 btnIdle: 'Idle', btnWork: 'Work', btnSync: 'Sync', btnError: 'Alert', btnDecor: 'Decorate Room',
                 drawerTitle: 'Decorate Room · Asset Sidebar', drawerClose: 'Close',
                 authTitle: 'Enter Decor Passcode', authPlaceholder: 'Enter passcode', authVerify: 'Verify', authDefaultPassHint: 'Default passcode: 1234 (ask me anytime to change it; stronger passcode recommended)',
@@ -1196,7 +1208,7 @@
                 assetHide: 'Hide', assetShow: 'Show',
                 resetToDefault: 'Reset to Default', restorePrevAsset: 'Use Previous',
                 btnMove: '📦 New Home', btnHome: '🐚 Go Home', btnHomeLast: '↩️ Last One', btnHomeFavorite: '⭐ Save This Home', btnBroker: '🤝 Broker', btnDIY: '🪚 DIY', btnBrokerGo: 'Follow Broker',
-                homeFavTitle: '🏠 Saved Homes', homeFavEmpty: 'No saved homes yet. Tap “⭐ Save This Home” first.', homeFavApply: 'Apply to Current Map', homeFavSaved: '✅ Current map saved', homeFavApplied: '✅ Applied saved home',
+                homeFavTitle: '🏠 Saved Homes', homeFavEmpty: 'No saved homes yet. Tap "⭐ Save This Home" first.', homeFavApply: 'Apply to Current Map', homeFavSaved: '✅ Current map saved', homeFavApplied: '✅ Applied saved home',
                 brokerHint: 'What kind of house would you recommend for Lobster?',
                 brokerPromptPh: 'e.g. Forbidden City theme, Monet style, dungeon theme, Terracotta Warriors theme...',
                 brokerNeedPrompt: 'Please enter broker style prompt first',
@@ -1211,11 +1223,11 @@
                 assetHintNotInScene: 'This object is not detected in current scene; you can still replace file (effective after refresh)',
                 assetHintDefault: 'Generic asset: keep source size, alpha channel, and visual anchor to avoid drift/distortion',
                 showCoords: 'Show Coords', hideCoords: 'Hide Coords', moveView: 'Pan View', lockView: 'Lock View',
-                memoTitle: 'YESTERDAY NOTES', guestTitle: 'VISITOR LIST', officeTitle: 'Haixin Lobster Office',
-                loadingOffice: 'Loading Star’s pixel office...'
+                memoTitle: 'YESTERDAY LAB NOTES', guestTitle: 'BREAKING BAD CREW', officeTitle: '🧪 Gray Matter Technologies',
+                loadingOffice: 'Loading Walter\'s 🧪 Gray Matter Technologies...'
             },
             ja: {
-                controlTitle: 'Star ステータス',
+                controlTitle: 'Walterの状態',
                 btnIdle: '待機', btnWork: '作業', btnSync: '同期', btnError: '警報', btnDecor: '部屋を編集',
                 drawerTitle: '部屋編集・アセットサイドバー', drawerClose: '閉じる',
                 authTitle: '編集パスコードを入力', authPlaceholder: 'パスコード入力', authVerify: '認証', authDefaultPassHint: '初期パスコード：1234（いつでも変更を相談可。強固なパス推奨）',
@@ -1239,7 +1251,7 @@
                 assetHintNotInScene: '現在のシーンでこのオブジェクトは未検出です。ファイル差し替えは可能（更新後に反映）',
                 assetHintDefault: '汎用素材：元サイズ・透過・視覚アンカーを維持し、ズレや崩れを防いでください',
                 showCoords: '座標表示', hideCoords: '座標非表示', moveView: '視点移動', lockView: '視点固定',
-                memoTitle: '昨日のメモ', guestTitle: '訪問者リスト', officeTitle: 'ハイシン・ロブスターのオフィス',
+                memoTitle: '昨日の実験記録', guestTitle: 'ブレイキング・バッド', officeTitle: '🧪 Gray Matter Technologies',
                 loadingOffice: 'Star のピクセルオフィスを読み込み中...'
             }
         };
@@ -1363,7 +1375,7 @@
 
         // 检测浏览器是否支持 WebP
         let supportsWebP = false;
-        
+
         // 方法 1: 使用 canvas 检测
         function checkWebPSupport() {
             return new Promise((resolve) => {
@@ -1375,7 +1387,7 @@
                 }
             });
         }
-        
+
         // 方法 2: 使用 image 检测（备用）
         function checkWebPSupportFallback() {
             return new Promise((resolve) => {
@@ -1413,11 +1425,11 @@
         async function loadMemo() {
             const memoDate = document.getElementById('memo-date');
             const memoContent = document.getElementById('memo-content');
-            
+
             try {
                 const response = await fetch('/yesterday-memo?t=' + Date.now(), { cache: 'no-store' });
                 const data = await response.json();
-                
+
                 if (data.success && data.memo) {
                     memoDate.textContent = data.date || '';
                     memoContent.innerHTML = data.memo.replace(/\n/g, '<br>');
@@ -1455,21 +1467,22 @@
             }, 300);
         }
 
-        // 兜底：某些移动网络/CDN 抖动时，避免一直卡在“加载中”遮罩
+        // 兜底：某些移动网络/CDN 抖动时，避免一直卡在"加载中"遮罩
         setTimeout(() => {
             if (loadingOverlay && loadingOverlay.style.display !== 'none') {
                 hideLoadingOverlay();
             }
         }, 8000);
-        
+
         // 懒加载逻辑已取消（体验优先：装饰首屏直接出现）
 
         const STATES = {
             idle: { name: '待命', area: 'breakroom' },
             writing: { name: '整理文档', area: 'writing' },
-            researching: { name: '搜索信息', area: 'researching' },
+            researching: { name: '分析研究', area: 'researching' },
             executing: { name: '执行任务', area: 'writing' },
-            syncing: { name: '同步备份', area: 'writing' },
+            syncing: { name: '协助运维', area: 'writing' },
+            orchestrating: { name: '运筹帷幄', area: 'writing' },
             error: { name: '出错了', area: 'error' }
         };
 
@@ -1480,6 +1493,7 @@
                 researching: ['我在挖证据链','让我把信息熬成结论','找到了：关键在这里','先把变量控制住','我在查：它为什么会这样','把直觉写成验证','先定位，再优化','别急，先画因果图'],
                 executing: ['执行中：不要眨眼','把任务切成小块逐个击破','开始跑 pipeline','一键推进：走你','让结果自己说话','先做最小可行，再做最美版本'],
                 syncing: ['同步中：把今天锁进云里','备份不是仪式，是安全感','写入中…别断电','把变更交给时间戳','云端对齐：咔哒','同步完成前先别乱动','把未来的自己从灾难里救出来','多一份备份，少一份后悔'],
+                orchestrating: ['运筹帷幄中','全局视角：每颗棋子都在位','协调各方，静候最优解','信息汇总，决策输出','把混乱变成秩序','指挥部在线','调度中：让每个 agent 各司其职','大局观开启'],
                 error: ['警报响了：先别慌','我闻到 bug 的味道了','先复现，再谈修复','把日志给我，我会说人话','错误不是敌人，是线索','把影响面圈起来','先止血，再手术','我在：马上定位根因','别怕，这种我见多了','报警中：让问题自己现形'],
                 cat: ['喵~','咕噜咕噜…','尾巴摇一摇','晒太阳最开心','有人来看我啦','我是这个办公室的吉祥物','伸个懒腰','今天的罐罐准备好了吗','呼噜呼噜','这个位置视野最好']
             },
@@ -1489,6 +1503,8 @@
                 researching: ['Digging the evidence chain.','Let me boil info into conclusions.','Found it: key clue here.','Control variables first.','Checking why this happens.','Turn intuition into verification.','Locate first, optimize next.','No rush—draw the causality map first.'],
                 executing: ['Executing—don’t blink.','Split tasks, conquer one by one.','Pipeline is running.','One-click push: go go.','Let the results speak.','Build MVP first, then craft beauty.'],
                 syncing: ['Syncing: lock today into the cloud.','Backup is safety, not ceremony.','Writing… don’t cut power.','Handing changes to timestamps.','Cloud alignment: click.','Don’t shake it before sync finishes.','Saving future-us from disasters.','One more backup, one less regret.'],
+
+                orchestrating: ['Orchestrating: every piece in position.','Big picture mode: activated.','Coordinating all agents.','Turning chaos into order.','Command center online.','Dispatching: each agent on task.','Strategic overview engaged.','Say my name.'],
                 error: ['Alarm on—stay calm.','I can smell a bug.','Reproduce first, then fix.','Give me logs; I’ll translate.','Errors are clues, not enemies.','Circle the impact area first.','Stop the bleeding, then surgery.','On it: tracing root cause now.','Don’t worry, seen this many times.','Alert mode: make the issue reveal itself.'],
                 cat: ['Meow~','Purr purr…','Tail wiggle activated.','Sunbathing is the best.','Someone came to see me!','I’m the office mascot.','Big stretch~','Is today’s snack ready yet?','Rrrrr purr…','Best view spot secured.']
             },
@@ -1498,6 +1514,8 @@
                 researching: ['証拠チェーンを掘っています。','情報を結論まで煮詰めます。','見つけた：鍵はここ。','まず変数を制御。','なぜこうなるか調査中。','直感を検証へ。','先に特定、次に最適化。','急がず因果マップから。'],
                 executing: ['実行中：まばたき厳禁。','タスクを分割して各個撃破。','パイプライン起動。','ワンクリック前進：いくぞ。','結果に語らせる。','まず最小実用、次に美しさ。'],
                 syncing: ['同期中：今日をクラウドに封印。','バックアップは儀式じゃなく安心。','書き込み中…電源オフ厳禁。','変更はタイムスタンプへ。','クラウド整列：カチッ。','同期完了まで触らないで。','未来の自分を災害から救う。','バックアップ一つ、後悔一つ減る。'],
+
+                orchestrating: ['統括中：全体を見渡す。','大局観：起動。','各エージェントを調整中。','混沌を秩序に。','司令部オンライン。'],
                 error: ['警報：まず落ち着いて。','バグの気配を感じる。','再現してから修正へ。','ログをください、人語にします。','エラーは敵ではなく手がかり。','まず影響範囲を囲う。','止血してから手術。','今すぐ根因を追跡中。','大丈夫、よくある案件。','警戒モード：問題を可視化する。'],
                 cat: ['ニャー','ゴロゴロ…','しっぽフリフリ。','ひなたぼっこ最高。','見に来てくれた！','このオフィスのマスコットです。','ぐーっと伸び。','今日のおやつ、準備できた？','ゴロゴロ。','ここ、いちばん見晴らしがいい。']
             }
@@ -1576,6 +1594,12 @@
         let guestWelcomeInitialized = false;
 
         // 状态控制栏函数（用于测试）
+        function updateStatePills(state) {
+            document.querySelectorAll('.state-pill').forEach(pill => {
+                pill.classList.toggle('active', pill.dataset.state === state);
+            });
+        }
+
         function setState(state, detail) {
             fetch('/set_state', {
                 method: 'POST',
@@ -1666,7 +1690,7 @@
                     'plants-spritesheet': '随机绿植',
                     'flowers-bloom-v2': '随机花朵',
                     'office_bg_small': '办公室背景',
-                    'memo-bg': '昨日小记底图',
+                    'memo-bg': '昨日实验记录底图',
                     'desk-v3': '办公桌',
                     'desk': '办公桌（旧）',
                     'guest_anim_1': '访客动画 1',
@@ -2138,7 +2162,7 @@
             // 先看命名是否属于精灵表
             const inferred = inferSpritesheetFrameMetaByPath(item?.path || '');
             if (!inferred) return null;
-            // 仅返回“是精灵表”的信号，单帧尺寸后续自动推断
+            // 仅返回"是精灵表"的信号，单帧尺寸后续自动推断
             return { w: null, h: null, isSheet: true };
         }
 
@@ -2298,7 +2322,7 @@
             clearAssetThumbTimers();
 
             if (rows.length === 0) {
-                list.innerHTML = '<div class="asset-sub" style="padding:8px">暂无资产（可点“刷新”重试）</div>';
+                list.innerHTML = '<div class="asset-sub" style="padding:8px">暂无资产（可点"刷新"重试）</div>';
                 return;
             }
 
@@ -2362,7 +2386,7 @@
                 }
             } catch (e) {
                 console.error('加载资产列表失败', e);
-                if (out) out.textContent = '❌ 资产加载失败，请点“刷新”重试';
+                if (out) out.textContent = '❌ 资产加载失败，请点"刷新"重试';
             }
         }
 
@@ -2616,9 +2640,9 @@ function toggleBrokerPanel() {
                     '正在给钳子装上远行 Buff……',
                     '正在匹配下一段创作气候……',
                     '正在把时差调成冒险模式……',
-                    '正在接收陌生街区的 Wi‑Fi 心跳……',
+                    '正在接收陌生街区的 Wi-Fi 心跳……',
                     '正在试播下一站的海风 BGM……',
-                    '正在加载“也许会爱上”的新房间……',
+                    '正在加载"也许会爱上"的新房间……',
                     '正在为未知邻居准备自我介绍……',
                     '正在解锁下一片数字海域……',
                     '正在把好奇心调到满格……',
@@ -2632,7 +2656,7 @@ function toggleBrokerPanel() {
                     'Installing a travel buff on the claws…',
                     'Matching the creative climate for the next chapter…',
                     'Switching the time zone to adventure mode…',
-                    'Receiving Wi‑Fi heartbeats from an unfamiliar block…',
+                    'Receiving Wi-Fi heartbeats from an unfamiliar block…',
                     'Previewing the sea-breeze BGM of the next stop…',
                     'Loading a new room you might just fall in love with…',
                     'Preparing an intro for unknown neighbors…',
@@ -2648,7 +2672,7 @@ function toggleBrokerPanel() {
                     'ハサミに遠征 Buff を装着しています……',
                     '次の創作区間の気候をマッチングしています……',
                     '時差を冒険モードに切り替えています……',
-                    '見知らぬ街区の Wi‑Fi ハートビートを受信しています……',
+                    '見知らぬ街区の Wi-Fi ハートビートを受信しています……',
                     '次の目的地の潮風 BGM を試聴しています……',
                     '「好きになるかもしれない」新しい部屋を読み込んでいます……',
                     '未知のご近所さん向けに自己紹介を準備しています……',
@@ -3231,9 +3255,10 @@ function toggleBrokerPanel() {
                 const stateMap = {
                     idle: '待命',
                     writing: '工作',
-                    researching: '调研',
+                    researching: '分析研究',
                     executing: '执行',
-                    syncing: '同步',
+                    syncing: '协助运维',
+                    orchestrating: '运筹帷幄',
                     error: '报警'
                 };
 
@@ -3241,7 +3266,7 @@ function toggleBrokerPanel() {
                 const stateText = stateMap[state] || state;
                 const subtitle = `${statusText} · ${stateText}`;
 
-                const pendingActions = `<button onclick="alert('交换 skill 功能开发中')">交换skill</button><button class="leave-btn" onclick="leaveGuestAgent('${agent.agentId}','${name}')">离开房间</button>`;
+                const pendingActions = ``;
 
                 return `
                   <div class="guest-agent-item" data-name="${name}">
@@ -3278,23 +3303,58 @@ function toggleBrokerPanel() {
             return { x: randomInt(rect.x1, rect.x2), y: randomInt(rect.y1, rect.y2) };
         }
 
-        function getAreaPoint(area, idx) {
-            // 非 demo 访客：仍用固定点位，避免每次轮询都抖动。
+        // Fixed positions per known agent (match by joinKey prefix in agentId or name)
+        const AGENT_FIXED_POS_BY_KEY = {
+            'gmt_kim':   { x: 293, y: 593 },
+            'gmt_gale':  { x: 891, y: 544 },
+            'gmt_jesse': { x: 690, y: 578 },
+            'gmt_mike':  { x: 1020, y: 378 },
+            'gmt_saul':  { x: 425, y: 496 },
+            'gmt_peter': { x: 160, y: 496 },
+        };
+        // Fixed sprite assignments: 1=gray, 2=lightgreen, 3=yellow, 4=green, 5=red, 6=red
+        const AGENT_SPRITE_BY_KEY = {
+            'gmt_gale':  4,  // green
+            'gmt_jesse': 5,  // red
+            'gmt_mike':  5,  // red
+            'gmt_saul':  3,  // yellow
+            'gmt_kim':   3,  // yellow
+            'gmt_peter': 1,  // gray/blue original
+        };
+
+        function getAreaPoint(area, idx, agentId, joinKey) {
+            // Check fixed position by joinKey first
+            if (joinKey && AGENT_FIXED_POS_BY_KEY[joinKey]) return AGENT_FIXED_POS_BY_KEY[joinKey];
+            // 7 spread-out positions per area, avoiding furniture sprites
+            // Furniture: desk(218,417) coffeeMachine(659,397) sofa(1100,450)
+            //   serverroom(1021,142) plants(565,178)(230,185)(977,496) cat(130,430)
             const map = {
                 breakroom: [
-                    { x: 511, y: 262 },
-                    { x: 841, y: 621 },
-                    { x: 690, y: 470 }
+                    { x: 480, y: 340 },
+                    { x: 720, y: 310 },
+                    { x: 550, y: 480 },
+                    { x: 730, y: 520 },
+                    { x: 500, y: 560 },
+                    { x: 640, y: 600 },
+                    { x: 400, y: 440 }
                 ],
                 writing: [
-                    { x: 190, y: 526 },
-                    { x: 380, y: 683 },
-                    { x: 300, y: 610 }
+                    { x: 160, y: 560 },
+                    { x: 330, y: 540 },
+                    { x: 250, y: 630 },
+                    { x: 380, y: 600 },
+                    { x: 200, y: 680 },
+                    { x: 310, y: 670 },
+                    { x: 170, y: 640 }
                 ],
                 error: [
-                    { x: 932, y: 275 },
-                    { x: 1109, y: 327 },
-                    { x: 1020, y: 305 }
+                    { x: 940, y: 260 },
+                    { x: 1080, y: 290 },
+                    { x: 1150, y: 260 },
+                    { x: 960, y: 320 },
+                    { x: 1100, y: 340 },
+                    { x: 1040, y: 270 },
+                    { x: 1130, y: 310 }
                 ]
             };
             const arr = map[area] || map.breakroom;
@@ -3317,14 +3377,14 @@ function toggleBrokerPanel() {
                 const idx = area === 'breakroom' ? idxBreak++ : area === 'error' ? idxError++ : idxWrite++;
                 const p = isDemo
                     ? randomPointInRect(getAreaRect(area))
-                    : getAreaPoint(area, idx);
+                    : getAreaPoint(area, idx, id, agent.joinKey);
 
                 if (!guestSprites[id]) {
                     // 优先用图标：demo visitor 有专门映射
                     let sprite;
                     const isDemoNika = DEMO_MODE && (agent.agentId === 'demo_nika' || agent.name === '尼卡');
                     const isDemoMercury = DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === '水星');
-                    
+
                     if (isDemoNika || isDemoMercury) {
                         // 统一使用动态像素角色，避免依赖已删除的 demo 静态图
                         const animKey = 'guest_anim_1';
@@ -3333,15 +3393,19 @@ function toggleBrokerPanel() {
                         if (sprite.anims && sprite.anims.play) sprite.anims.play(animKey, true);
                     } else {
                         // 非 demo 访客：优先用动画精灵（guest_anim_x），其次静态图，兜底星星
-                        // 先确定角色索引（1-6）
-                        let animIdx = agent.avatar
-                            ? parseInt((agent.avatar.match(/_(\d+)$/) || [])[1] || '0', 10)
-                            : 0;
-                        if (!animIdx || animIdx < 1 || animIdx > 6) {
+                        // 先确定角色索引（1-6）— 优先用 joinKey 固定映射
+                        let animIdx = 0;
+                        const jk = agent.joinKey || '';
+                        if (AGENT_SPRITE_BY_KEY[jk]) {
+                            animIdx = AGENT_SPRITE_BY_KEY[jk];
+                        } else if (agent.avatar) {
+                            animIdx = parseInt((agent.avatar.match(/_(\d+)$/) || [])[1] || '0', 10);
+                        }
+                        if (!animIdx || animIdx < 1 || animIdx > 7) {
                             const aid = String(agent.agentId || '');
                             let hash = 0;
                             for (let i = 0; i < aid.length; i++) hash = (hash * 31 + aid.charCodeAt(i)) >>> 0;
-                            animIdx = (hash % 6) + 1;
+                            animIdx = (hash % 7) + 1;
                         }
                         const animKey = `guest_anim_${animIdx}`;
                         const animIdleKey = `guest_anim_${animIdx}_idle`;
@@ -3455,7 +3519,7 @@ function toggleBrokerPanel() {
             const id = ids[Math.floor(Math.random() * ids.length)];
             const g = guestSprites[id];
 
-            // demo 气泡：优先展示与状态对应的内容，便于验证“状态→区域→气泡”链路
+            // demo 气泡：优先展示与状态对应的内容，便于验证"状态→区域→气泡"链路
             const demoVisitor = (DEMO_MODE && window.__demoVisitors)
                 ? (window.__demoVisitors.find(v => v.agentId === id) || window.__demoVisitors.find(v => v.name === (g.nameText && g.nameText.text)))
                 : null;
@@ -3478,7 +3542,7 @@ function toggleBrokerPanel() {
             }
 
             const bx = g.sprite.x;
-            // 气泡位置：demo 维持原逻辑；真实访客放在“名字上方”，避免压角色也避免压名字
+            // 气泡位置：demo 维持原逻辑；真实访客放在"名字上方"，避免压角色也避免压名字
             const isDemoGuest = (demoVisitor && demoVisitor.isDemo) || (id === 'demo_nika' || id === 'demo_mercury');
             const nameH = (g.nameText && g.nameText.height) ? g.nameText.height : 16;
             const by = isDemoGuest ? (g.sprite.y - 90) : ((g.nameText ? g.nameText.y : (g.sprite.y - 150)) - (nameH / 2) - 22);
@@ -3645,7 +3709,7 @@ function toggleBrokerPanel() {
                                     const lang = uiLang;
                                     const welcomeTexts = {
                                         zh: [`欢迎 ${newAgent.name} 来到办公室～`,`Hi ${newAgent.name}，一起开工吧`,`${newAgent.name} 已加入，欢迎！`],
-                                        en: [`Welcome ${newAgent.name} to the office!`,`Hi ${newAgent.name}, let’s build something.`,`${newAgent.name} just joined — welcome!`],
+                                        en: [`Welcome ${newAgent.name} to the office!`,`Hi ${newAgent.name}, let's build something.`,`${newAgent.name} just joined - welcome!`],
                                         ja: [`${newAgent.name} さん、オフィスへようこそ！`,`Hi ${newAgent.name}、一緒に進めよう。`,`${newAgent.name} さんが参加しました、歓迎！`]
                                     };
                                     const langPack = BUBBLE_TEXTS[lang] || BUBBLE_TEXTS.zh;
@@ -3687,7 +3751,7 @@ function toggleBrokerPanel() {
                     supportsWebP = false;
                 }
             }
-            
+
             console.log('WebP 支持:', supportsWebP);
             applyLanguage();
             updateSpeedModeUI();
@@ -3723,16 +3787,16 @@ function toggleBrokerPanel() {
             loadingProgressBar = document.getElementById('loading-progress-bar');
             loadingText = document.getElementById('loading-text');
             loadingProgressContainer = document.getElementById('loading-progress-container');
-            
+
             // 设置资源总数（全部首屏加载：装饰也第一时间出现）
             totalAssets = 15;
             loadedAssets = 0;
-            
+
             // 加载进度监听
             this.load.on('filecomplete', () => {
                 updateLoadingProgress();
             });
-            
+
             this.load.on('complete', () => {
                 hideLoadingOverlay();
             });
@@ -3772,7 +3836,7 @@ function toggleBrokerPanel() {
             this.load.spritesheet('sync_anim', '/static/sync-animation-v3-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 256, frameHeight: 256 });
 
             // Memo background image
-            // memo 底图固定走 png，避免某些端 webp 透明通道异常导致“底图丢失”
+            // memo 底图固定走 png，避免某些端 webp 透明通道异常导致"底图丢失"
             this.load.image('memo_bg', '/static/memo-bg.webp?v={{VERSION_TIMESTAMP}}');
             // Desk v2 (webp only)
             this.load.image('desk_v2', '/static/desk-v3.webp?v={{VERSION_TIMESTAMP}}');
@@ -3786,11 +3850,13 @@ function toggleBrokerPanel() {
             this.load.spritesheet('guest_anim_4', '/static/guest_anim_4.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 32, frameHeight: 32 });
             this.load.spritesheet('guest_anim_5', '/static/guest_anim_5.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 32, frameHeight: 32 });
             this.load.spritesheet('guest_anim_6', '/static/guest_anim_6.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 32, frameHeight: 32 });
+            this.load.spritesheet('guest_anim_7', '/static/guest_anim_7.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 32, frameHeight: 32 });
         }
 
         function create() {
             game = this;
             officeBgSprite = this.add.image(640, 360, 'office_bg');
+            updateStatePills(currentState);
 
             // Place furniture: Sofa
             // NOTE: coordinates are interpreted as the TOP-LEFT corner of the sprite
@@ -3819,8 +3885,8 @@ function toggleBrokerPanel() {
             });
 
 
-            // 创建 6 个访客角色的循环 idle 动画（8帧循环）
-            for (let i = 1; i <= 6; i++) {
+            // 创建 7 个访客角色的循环 idle 动画（8帧循环）
+            for (let i = 1; i <= 7; i++) {
                 this.anims.create({
                     key: `guest_anim_${i}_idle`,
                     frames: this.anims.generateFrameNumbers(`guest_anim_${i}`, { start: 0, end: 7 }),
@@ -3870,7 +3936,7 @@ function toggleBrokerPanel() {
             // Expose to global for click handler
             window.plantSprite = plant;
             window.plantFrameCount = plantFrameCount;
-            
+
             plant.on('pointerdown', () => {
                 const next = Math.floor(Math.random() * window.plantFrameCount);
                 window.plantSprite.setFrame(next);
@@ -3883,7 +3949,7 @@ function toggleBrokerPanel() {
             plant2.setInteractive({ useHandCursor: true });
             // Expose to global for click handler
             window.plantSprite2 = plant2;
-            
+
             plant2.on('pointerdown', () => {
                 const next = Math.floor(Math.random() * window.plantFrameCount);
                 window.plantSprite2.setFrame(next);
@@ -3896,7 +3962,7 @@ function toggleBrokerPanel() {
             plant3.setInteractive({ useHandCursor: true });
             // Expose to global for click handler
             window.plantSprite3 = plant3;
-            
+
             plant3.on('pointerdown', () => {
                 const next = Math.floor(Math.random() * window.plantFrameCount);
                 window.plantSprite3.setFrame(next);
@@ -3905,22 +3971,22 @@ function toggleBrokerPanel() {
             // Random poster at (252,66) (random frame from spritesheet)
             const postersFrameCount = (this.textures.get('posters')?.frameTotal || 1) - 1;
             const randomPosterFrame = Math.floor(Math.random() * Math.max(1, postersFrameCount));
-            const poster = game.add.sprite(252, 66, 'posters', randomPosterFrame).setOrigin(0.5);
+            const poster = game.add.sprite(-1000, -1000, 'posters', randomPosterFrame).setOrigin(0.5);
             poster.setDepth(4);
             poster.setInteractive({ useHandCursor: true });
             // Expose to global for click handler
             window.posterSprite = poster;
             window.posterFrameCount = postersFrameCount;
-            
+
             poster.on('pointerdown', () => {
                 const next = Math.floor(Math.random() * window.posterFrameCount);
                 window.posterSprite.setFrame(next);
             });
 
-            // Random cat at (94,557)
+            // Random cat at (950,629)
             const catsFrameCount = (this.textures.get('cats')?.frameTotal || 1) - 1;
             const randomCatFrame = Math.floor(Math.random() * Math.max(1, catsFrameCount));
-            const cat = game.add.sprite(94, 557, 'cats', randomCatFrame).setOrigin(0.5);
+            const cat = game.add.sprite(950, 629, 'cats', randomCatFrame).setOrigin(0.5);
             cat.setDepth(2000); // top layer
             cat.setInteractive({ useHandCursor: true });
             // Expose to global for click handler
@@ -4054,7 +4120,7 @@ function toggleBrokerPanel() {
                 coordsToggle.style.background = showCoords ? '#e94560' : '#333';
             });
 
-            // 允许手机端“拖动/滑动”来移动视野（本质：移动 Phaser Camera）
+            // 允许手机端"拖动/滑动"来移动视野（本质：移动 Phaser Camera）
             // iPhone 等触屏设备默认开启；桌面端默认关闭（可手动开）。
             const panToggle = document.getElementById('pan-toggle');
             const isTouchDevice = IS_TOUCH_DEVICE;
@@ -4079,7 +4145,7 @@ function toggleBrokerPanel() {
                 camera.scrollY = clamp(camera.scrollY, 0, maxScrollY());
             }
 
-            // 手机上：锁定“办公室画布高度 = 2/3 区域高度”，
+            // 手机上：锁定"办公室画布高度 = 2/3 区域高度"，
             // 让世界坐标在竖向恰好看满（不需要上下拖），只保留横向拖动浏览左右。
             // 记录初始是否已手动平移（避免 resize 时把用户拖好的位置重置）
             let hasManuallyPanned = false;
@@ -4130,7 +4196,7 @@ function toggleBrokerPanel() {
                 }
                 game.input.setDefaultCursor(on ? 'grab' : 'default');
                 if (isTouchDevice && statusText) {
-                    const info = on ? '视野拖动已开启（可左右拖动画布）' : '视野拖动已关闭（点击左上角“移动视野”可开启）';
+                    const info = on ? '视野拖动已开启（可左右拖动画布）' : '视野拖动已关闭（点击左上角"移动视野"可开启）';
                     statusText.textContent = `状态：[${(STATES[currentState] && STATES[currentState].name) || '待命'}] ${info}`;
                 }
             }
@@ -4139,7 +4205,7 @@ function toggleBrokerPanel() {
                 panToggle.addEventListener('click', () => setPanEnabled(!panEnabled));
             }
 
-            // 手机端默认关闭拖动画面：由左上角“移动视野”开关显式开启
+            // 手机端默认关闭拖动画面：由左上角"移动视野"开关显式开启
             if (isTouchDevice) {
                 setPanEnabled(false);
             }
@@ -4151,7 +4217,7 @@ function toggleBrokerPanel() {
             const canvasEl = game.canvas;
             let touchPan = null; // {x,y,sx,sy,lock:'x'|'y'|null}
             if (canvasEl) {
-                // 手机端允许页面自然滚动，避免“不能滑动”
+                // 手机端允许页面自然滚动，避免"不能滑动"
                 canvasEl.style.touchAction = 'auto';
 
                 canvasEl.addEventListener('touchstart', (e) => {
@@ -4204,7 +4270,7 @@ function toggleBrokerPanel() {
                 const dx = pointer.x - panStart.x;
                 const dy = pointer.y - panStart.y;
 
-                // 手机端优先“横向拖动看办公室”，纵向手势留给页面滚动看下方面板。
+                // 手机端优先"横向拖动看办公室"，纵向手势留给页面滚动看下方面板。
                 if (isTouchDevice && Math.abs(dy) > Math.abs(dx)) {
                     return;
                 }
@@ -4365,6 +4431,7 @@ function toggleBrokerPanel() {
                             // Set state immediately (no waypoints/path movement)
                             pendingDesiredState = null;
                             currentState = nextState;
+                            updateStatePills(nextState);
 
                             // Idle: show Star idle animation (main character)
                             if (nextState === 'idle') {

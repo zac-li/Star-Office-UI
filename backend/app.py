@@ -232,7 +232,7 @@ def load_state():
         ttl = int(state.get("ttl_seconds", 300))
         updated_at = state.get("updated_at")
         s = state.get("state", "idle")
-        working_states = {"writing", "researching", "executing"}
+        working_states = {"writing", "researching", "executing", "orchestrating"}
         if updated_at and s in working_states:
             # tolerate both with/without timezone
             dt = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
@@ -585,7 +585,9 @@ def normalize_agent_state(s):
         return 'syncing'
     if s_lower in {'research', 'search'}:
         return 'researching'
-    if s_lower in {'idle', 'writing', 'researching', 'executing', 'syncing', 'error'}:
+    if s_lower in {'orchestrate', 'orchestrating', 'coordinate'}:
+        return 'orchestrating'
+    if s_lower in {'idle', 'writing', 'researching', 'executing', 'syncing', 'error', 'orchestrating'}:
         return s_lower
     # 默认 fallback
     return 'idle'
@@ -747,6 +749,7 @@ def state_to_area(state):
         "researching": "writing",
         "executing": "writing",
         "syncing": "writing",
+        "orchestrating": "writing",
         "error": "error"
     }
     return area_map.get(state, "breakroom")
@@ -1090,7 +1093,7 @@ def agent_push():
         if not agent_id or not join_key or not state:
             return jsonify({"ok": False, "msg": "缺少 agentId/joinKey/state"}), 400
 
-        valid_states = {"idle", "writing", "researching", "executing", "syncing", "error"}
+        valid_states = {"idle", "writing", "researching", "executing", "syncing", "error", "orchestrating"}
         state = normalize_agent_state(state)
 
         keys_data = load_join_keys()
@@ -1196,7 +1199,7 @@ def set_state_endpoint():
         state = load_state()
         if "state" in data:
             s = data["state"]
-            valid_states = {"idle", "writing", "researching", "executing", "syncing", "error"}
+            valid_states = {"idle", "writing", "researching", "executing", "syncing", "error", "orchestrating"}
             if s in valid_states:
                 state["state"] = s
         if "detail" in data:
@@ -1865,7 +1868,7 @@ if __name__ == "__main__":
     print("Star Office UI - Backend State Service")
     print("=" * 50)
     print(f"State file: {STATE_FILE}")
-    print("Listening on: http://0.0.0.0:18791")
+    print("Listening on: http://0.0.0.0:18801")
     print("=" * 50)
     
-    app.run(host="0.0.0.0", port=18791, debug=False)
+    app.run(host="0.0.0.0", port=18801, debug=False)
