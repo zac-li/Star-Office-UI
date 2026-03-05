@@ -311,6 +311,32 @@ export ASSET_DRAWER_PASS="your-strong-pass"
 
 > 详细说明见：`docs/UPDATE_REPORT_2026-03-04_P0_P1.md`
 
+### G) 2026-03-05 稳定性修复与移动端优化（新增）
+
+本次更新覆盖 8 个 commit，聚焦「前端加载修复 + 生图异步化 + 移动端体验」：
+
+1. **前端加载修复**
+   - 修复 CDN 缓存 404 导致页面无法加载（仅 2xx 响应设长缓存）
+   - 修复 `fetchStatus()` 中多余 `else` 块导致的 JS 语法错误
+
+2. **生图接口异步化**
+   - 生图改为后台任务 + 前端轮询模式，避免 Cloudflare 524 超时
+   - 新增 `GET /assets/generate-rpg-background/poll` 轮询端点
+   - 前端显示实时等待进度
+
+3. **移动端侧边栏优化**
+   - 新增遮罩层（backdrop），点击即关闭 drawer
+   - 打开 drawer 时锁定 body 滚动，关闭后恢复位置
+   - Drawer 关闭时完全移出视口（`right: -100vw`）
+   - 适配 `100dvh` + `overscroll-behavior: contain`
+
+4. **Join Key 过期与并发控制**
+   - 支持 key 级别的 `expiresAt` 过期时间
+   - 支持 `maxConcurrent` 控制单 key 并发在线数
+   - `join-keys.json` 加入 `.gitignore`（运行时数据不入库）
+
+> 详细说明见：`docs/UPDATE_REPORT_2026-03-05.md`
+
 ## 项目结构（简版）
 
 ```text

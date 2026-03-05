@@ -257,3 +257,15 @@ export ASSET_DRAWER_PASS="your-strong-pass"
 2. 已支持 **自定义美术资产替换**（含动态素材切帧同步，减少闪烁）。
 3. 已支持 **接入自有生图 API** 持续更换背景（推荐 `nanobanana-pro` / `nanobanana-2`）。
 4. 新增/强化了安全项：`ASSET_DRAWER_PASS` 生产环境建议改强密码。
+
+### 10.7 2026-03-05 稳定性修复
+
+本次更新修复了多个影响线上稳定运行的问题：
+
+1. **CDN 缓存修复**：静态资源 404 不再被 CDN 长缓存（之前导致 `phaser.js` 被缓存为 404 达 2.7 天）。
+2. **前端加载修复**：修复 `fetchStatus()` 中的 JS 语法错误（多余 `else` 块），解决页面卡 loading 问题。
+3. **生图异步化**：生图接口改为后台任务 + 轮询模式，避免 Cloudflare 524 超时（100s 限制）。前端显示实时等待进度。
+4. **移动端侧边栏**：新增遮罩层、body 滚动锁定、`100dvh` 适配、`overscroll-behavior: contain`。
+5. **Join Key 增强**：支持 key 级别过期时间（`expiresAt`）和并发上限（`maxConcurrent`），`join-keys.json` 不再入库。
+
+> 详细说明见：`docs/UPDATE_REPORT_2026-03-05.md`
