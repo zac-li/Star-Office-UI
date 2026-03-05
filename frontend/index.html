@@ -1259,7 +1259,7 @@
         <button id="lang-btn-cn" onclick="setUILanguage('zh')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">CN</button>
     </div>
 
-    <script src="/static/vendor/phaser-3.80.1.min.js"></script>
+    <script src="/static/vendor/phaser-3.80.1.min.js?v={{VERSION_TIMESTAMP}}"></script>
     <script>
         // 简易中英文切换
         let uiLang = localStorage.getItem('uiLang') || 'en';
@@ -4605,8 +4605,8 @@ function toggleBrokerPanel() {
                             typewriterText = '';
                             typewriterIndex = 0;
                         }
-                        }
-                    } catch (err) {
+                    }
+                } catch (err) {
                         console.error('fetchStatus apply error', err);
                         typewriterTarget = '状态更新异常，正在恢复...';
                         typewriterText = '';

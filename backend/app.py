@@ -109,10 +109,11 @@ def _require_asset_editor_auth():
 def add_no_cache_headers(response):
     """Apply cache policy by path:
     - HTML/API/state: no-cache (always fresh)
-    - /static assets: long cache (filenames are versioned with ?v=VERSION_TIMESTAMP)
+    - /static assets (2xx only): long cache (filenames are versioned with ?v=VERSION_TIMESTAMP)
+    - /static assets (non-2xx, e.g. 404): no-cache to prevent CDN from caching errors
     """
     path = (request.path or "")
-    if path.startswith('/static/'):
+    if path.startswith('/static/') and 200 <= response.status_code < 300:
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
         response.headers.pop("Pragma", None)
         response.headers.pop("Expires", None)
