@@ -3678,7 +3678,7 @@ function toggleBrokerPanel() {
             'gmt_mike':  { x: 1020, y: 378 },
             'gmt_saul':  { x: 425, y: 496 },
             'gmt_peter': { x: 160, y: 610 },
-            'gmt_cthulhu': { x: 820, y: 378 },
+            'gmt_cthulhu': { x: 500, y: 580 },
         };
         // Fixed sprite assignments: 1=gray, 2=lightgreen, 3=yellow, 4=green, 5=red, 6=red, 7=blue
         const AGENT_SPRITE_BY_KEY = {
@@ -3688,7 +3688,7 @@ function toggleBrokerPanel() {
             'gmt_saul':  3,  // yellow
             'gmt_kim':   3,  // yellow
             'gmt_peter': 1,  // gray/blue original
-            'gmt_cthulhu': 7, // blue (deep sea entity)
+            'gmt_cthulhu': 1, // gray (same as Peter)
         };
 
         function getAreaPoint(area, idx, agentId, joinKey) {
@@ -3909,7 +3909,7 @@ function toggleBrokerPanel() {
                 gmt_saul: ['分析研究中', '我认识一个人', 'Better Call Saul', '法律的灰色地带最有趣', '合同条款里藏着魔鬼', '信息就是弹药', '我有个更好的方案', 'It\u2019s all good, man.'],
                 gmt_kim: ['分析研究中', '证据链不能断', '每个细节都有法律意义', '先把事实理清楚', '我比你想的更了解规则', '数据不会说谎', '合规审查进行中', '认真的人不需要运气'],
                 gmt_peter: ['执行中', '始祖 Claw 在线', '我可是这里的精神领袖', '管道已启动', '永远的 OG', '默默干活，低调高效', '系统核心运转中', 'The original Claw.'],
-                gmt_cthulhu: ['Ph\u2019nglui mglw\u2019nafh Cthulhu', '深渊凝视着你', '在群星归位之时...', 'Iä! Iä! Cthulhu fhtagn!', '骰子已经掷出', '那不是死亡，是永恒的沉眠', 'Roll for sanity check.', 'The stars are almost right.'],
+                gmt_cthulhu: ['深渊凝视着你', '在群星归位之时...', '那不是死亡，是永恒的沉眠', '太平洋底，拉莱耶在等待', '人类的理性不过是薄冰一层', '知道得越多，离疯狂越近', 'Ph\u2019nglui mglw\u2019nafh Cthulhu R\u2019lyeh wgah\u2019nagl fhtagn', 'Iä! Iä! Cthulhu fhtagn!', 'The stars are almost right.', 'That is not dead which can eternal lie.', 'In his house at R\u2019lyeh, dead Cthulhu waits dreaming.'],
             };
             const agentData = guestAgents.find(a => a.agentId === id) || {};
             const agentState = agentData.state || 'idle';
