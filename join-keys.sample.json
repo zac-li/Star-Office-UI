@@ -5,6 +5,7 @@
     {"key": "gmt_jesse", "used": false, "reusable": true, "maxConcurrent": 3},
     {"key": "gmt_mike", "used": false, "reusable": true, "maxConcurrent": 3},
     {"key": "gmt_saul", "used": false, "reusable": true, "maxConcurrent": 3},
-    {"key": "gmt_kim", "used": false, "reusable": true, "maxConcurrent": 3}
+    {"key": "gmt_kim", "used": false, "reusable": true, "maxConcurrent": 3},
+    {"key": "gmt_cthulhu", "used": false, "reusable": true, "maxConcurrent": 3}
   ]
 }

@@ -2,22 +2,32 @@
 
 🌐 Language: [中文](./README.md) | [English](./README.en.md) | **日本語**
 
-![Star Office UI カバー 2](docs/screenshots/readme-cover-2.jpg)
+![Star Office UI カバー](docs/screenshots/readme-cover-2.jpg)
 
-複数 Agent 協調向けのピクセル・オフィス可視化ダッシュボードです。AI アシスタント（OpenClaw / 「ロブスター」）の状態をリアルタイム表示し、「誰が何をしているか」「昨日何をしたか」「オンラインかどうか」を直感的に把握できます。
+**ピクセルアート風 AI オフィスダッシュボード** —— AI アシスタントの作業状態をリアルタイムで可視化し、「誰が何をしているか」「昨日何をしたか」「今オンラインか」を直感的に把握できます。
 
-> このプロジェクトは **Ring Hyacinth と Simon Lee の共同制作プロジェクト（co-created project）** です。
+マルチ Agent 協調、中英日 3 言語、AI 画像生成による模様替え、デスクトップペットモードに対応。
+[OpenClaw](https://github.com/openclaw/openclaw) との統合で最高の体験が得られますが、単体でもステータスダッシュボードとして利用可能です。
 
----
-
-## このプロジェクトは？（一言で）
-
-Star Office UI は「複数人協調状態ダッシュボード」—— 次のように考えられます：
-> リアルタイム更新の「ピクセル・オフィス・ダッシュボード」：AI アシスタント（および招待した他の Agent）は状態に応じて自動的に別のエリア（休憩室 / 作業机 / バグエリア）に移動し、昨日の作業ミニサマリーも確認できます。
+> 本プロジェクトは **[Ring Hyacinth](https://x.com/ring_hyacinth)** と **[Simon Lee](https://x.com/simonxxoo)** の共同制作（co-created project）であり、コミュニティの開発者（[@Zhaohan-Wang](https://github.com/Zhaohan-Wang)、[@Jah-yee](https://github.com/Jah-yee)、[@liaoandi](https://github.com/liaoandi)）とともに継続的にメンテナンス・改善を行っています。
+> Issue や PR を歓迎します。貢献してくださるすべての方に感謝いたします。
 
 ---
 
-## ✨ 30秒クイックスタート（推奨）
+## ✨ クイックスタート
+
+### 方法 1：ロブスターにデプロイしてもらう（OpenClaw ユーザー向け）
+
+[OpenClaw](https://github.com/openclaw/openclaw) をご利用中なら、以下のメッセージをロブスターに送るだけ：
+
+```text
+この SKILL.md に従って Star Office UI をデプロイしてください：
+https://github.com/ringhyacinth/Star-Office-UI/blob/master/SKILL.md
+```
+
+ロブスターが自動的にリポジトリのクローン、依存関係のインストール、バックエンドの起動、ステータス同期の設定を行い、アクセス URL をお知らせします。
+
+### 方法 2：30 秒手動セットアップ
 
 ```bash
 # 1) リポジトリをクローン
@@ -27,7 +37,7 @@ cd Star-Office-UI
 # 2) 依存関係をインストール
 python3 -m pip install -r backend/requirements.txt
 
-# 3) 状態ファイルを初期化（初回）
+# 3) 状態ファイルを初期化（初回のみ）
 cp state.sample.json state.json
 
 # 4) バックエンドを起動
@@ -35,86 +45,52 @@ cd backend
 python3 app.py
 ```
 
-開く：**http://127.0.0.1:18791**
+**http://127.0.0.1:19000** を開き、状態を切り替えてみましょう：
 
-状態を切り替えてみましょう（プロジェクトルートで実行）：
 ```bash
 python3 set_state.py writing "ドキュメント整理中"
-python3 set_state.py syncing "進捗同期中"
 python3 set_state.py error "問題を検出、調査中"
 python3 set_state.py idle "待機中"
 ```
-![Star Office UI カバー 1](docs/screenshots/readme-cover-1.jpg)
----
 
-## I. このプロジェクトが実現していること
-
-Star Office UI は現在、次の機能を提供しています：
-
-1. **ロブスター作業状態の可視化**
-   - 状態：`idle`（待機）、`writing`（作業中）、`researching`（調査中）、`executing`（実行中）、`syncing`（同期中）、`error`（エラー）
-   - 状態はオフィス内の各エリアにマッピングされ、アニメーション/吹き出しで表示されます。
-
-2. **「昨日メモ」ミニサマリー**
-   - フロントエンドに「昨日メモ」カードを表示。
-   - バックエンドは `memory/*.md` から昨日（または最近利用可能な記録）を読み、簡易な匿名化を行って表示します。
-
-3. **他ゲストの参加対応（継続改善中）**
-   - join key で参加。
-   - ゲストは自身の状態を継続的に push 可能。
-   - 現在利用可能ですが、導線や体験は継続最適化中です。
-
-4. **モバイル対応**
-   - スマホから直接アクセスして状態確認が可能。
-
-5. **中英日 3言語切替**
-   - CN / EN / JP に対応。
-   - UI 文言、読み込み文言、キャラ吹き出しが連動して切替。
-
-6. **アートアセットのカスタマイズ**
-   - サイドバーからキャラ/シーン素材を差し替え可能。
-   - フレームサイズ/範囲同期によりチラつきを低減。
-
-7. **画像生成 API 連携（背景を無限更新）**
-   - 「引っ越し / 仲介探し」型の背景更新が可能。
-   - 推奨モデル：`nanobanana-pro` または `nanobanana-2`。
-   - API 未接続でもコア機能（状態看板/資産管理）は利用可能。
-
-8. **公開アクセスが柔軟**
-   - Cloudflare Tunnel で素早く公開可能。
-   - 独自ドメイン / リバースプロキシにも対応。
+![Star Office UI プレビュー](docs/screenshots/readme-cover-1.jpg)
 
 ---
 
-## II. 今回のリビルド（2026-03）核心変更
+## 🤔 誰に向いている？
 
-今回の版は小修正ではなく、元プロジェクトに基づく全面リビルドです。主な変化は4方向：
+### OpenClaw / AI Agent をお持ちの方
+これが**フル体験**です。Agent が作業中に自動でステータスを切り替え、ピクセルキャラクターがリアルタイムで対応エリアに移動します。ページを開くだけで、AI が今何をしているかがわかります。
 
-1. **中英日 3言語追加（CN / EN / JP）**
-   - 全体 UI の3言語化
-   - 状態文言・提示文言・資産表示名の連動切替
-
-2. **資産管理機能追加（全アセットのユーザー定義）**
-   - サイドバーで選択・差し替え・デフォルト管理
-   - キャラ・背景・装飾・ボタン等を自由に差し替え
-
-3. **画像生成 API 接続（智能装修 + 手動装修）**
-   - 「引っ越し / 仲介探し / 自分で装修」導線
-   - OpenClaw で部屋スタイルを生成変更、手動テーマ入力にも対応
-
-4. **アート資産の置換と最適化（重点）**
-   - 中核資産の大規模置換・再描画
-   - 命名と索引マッピングを再構築し、安定性・保守性向上
-   - 動的素材の切り帧・表示ロジック最適化で誤帧/キャッシュ干渉を低減
+### OpenClaw をお持ちでない方
+デプロイして使うことも全く問題ありません：
+- `set_state.py` や API で手動 / スクリプトからステータスを更新
+- ピクセルアート風の個人ステータスページやリモートワークダッシュボードとして利用
+- HTTP リクエストを送れるシステムなら何でもステータスを駆動可能
 
 ---
 
-## III. クイックスタート
+## 📋 機能一覧
+
+1. **ステータス可視化** —— 6 種類の状態（`idle` / `writing` / `researching` / `executing` / `syncing` / `error`）がオフィスの各エリアに自動マッピングされ、アニメーションと吹き出しでリアルタイム表示
+2. **昨日メモ** —— `memory/*.md` から直近の作業記録を自動取得し、匿名化して「昨日メモ」カードとして表示
+3. **マルチ Agent 協調** —— join key で他の Agent をオフィスに招待し、全員のステータスをリアルタイム確認
+4. **中英日 3 言語対応** —— CN / EN / JP をワンクリック切替、UI テキスト・吹き出し・ローディング表示すべてが連動
+5. **アート資産カスタマイズ** —— サイドバーからキャラクター / 背景 / 装飾素材を管理、動的フレーム同期でちらつき防止
+6. **AI 画像生成による模様替え** —— Gemini API を接続してオフィス背景を AI 生成; API 未接続でもコア機能は利用可能
+7. **モバイル対応** —— スマホからそのまま閲覧可能、外出先からのクイックチェックに最適
+8. **セキュリティ強化** —— サイドバーのパスワード保護、本番環境での弱パスワード拒否、Session Cookie 強化
+9. **柔軟な公開アクセス** —— Cloudflare Tunnel でワンステップ公開、独自ドメイン / リバースプロキシにも対応
+10. **デスクトップペット版** —— オプションの Tauri デスクトップラッパーで、オフィスを透明ウィンドウのデスクトップペットに（下記参照）
+
+---
+
+## 🚀 詳細セットアップガイド
 
 ### 1) 依存関係インストール
 
 ```bash
-cd star-office-ui
+cd Star-Office-UI
 python3 -m pip install -r backend/requirements.txt
 ```
 
@@ -131,9 +107,11 @@ cd backend
 python3 app.py
 ```
 
-開く：`http://127.0.0.1:18791`
+`http://127.0.0.1:19000` を開く
 
-### 4) メイン Agent 状態切替（例）
+> ✅ ローカル開発ではデフォルト設定のままで構いませんが、本番環境では `.env.example` を `.env` にコピーし、`FLASK_SECRET_KEY` と `ASSET_DRAWER_PASS` に十分な長さのランダム値を設定してください。
+
+### 4) ステータス切替
 
 ```bash
 python3 set_state.py writing "ドキュメント整理中"
@@ -142,201 +120,173 @@ python3 set_state.py error "問題を検出、調査中"
 python3 set_state.py idle "待機中"
 ```
 
----
-
-## IV. よく使う API
-
-- `GET /health`：ヘルスチェック
-- `GET /status`：メイン Agent 状態
-- `POST /set_state`：メイン Agent 状態設定
-- `GET /agents`：マルチ Agent リスト取得
-- `POST /join-agent`：ゲスト参加
-- `POST /agent-push`：ゲスト状態 push
-- `POST /leave-agent`：ゲスト離脱
-- `GET /yesterday-memo`：昨日メモ
-
----
-
-## V. アート資産利用について（必読）
-
-### ゲストキャラ資産の出典
-
-LimeZu の無料素材を利用：
-- **Animated Mini Characters 2 (Platformer) [FREE]**
-- https://limezu.itch.io/animated-mini-characters-2-platform-free
-
-再配布/デモ時は出典表示を残し、原作者ライセンスに従ってください。
-
-### 商用制限（重要）
-
-- コード/ロジックは MIT で利用・改変可能。
-- **本リポジトリ内の美術資産（主役/背景/素材一式）は商用不可。**
-- 商用利用時は必ずオリジナル資産へ差し替えてください。
-
----
-
-## VI. オープンソースライセンスと声明
-
-- **Code / Logic：MIT**（`LICENSE` 参照）
-- **Art Assets：非商用、学習/デモ用途限定**
-
-Fork、アイデア共有、PR は歓迎。資産利用境界は厳守してください。
-
----
-
-## VII. さらなる拡張へ
-
-このフレームワークを基に、例えば：
-- 状態意味の拡張と自動編排
-- 多部屋/多チーム協業マップ
-- タスク看板、時間線、日報自動生成
-- より完備したアクセス制御・権限体系
-
-面白い改造をしたらぜひ共有してください。
-
----
-
-## VIII. プロジェクト作者
-
-本プロジェクトは **Ring Hyacinth** と **Simon Lee** の共同制作・共同保守です。
-
-- **X：Ring Hyacinth (@ring_hyacinth)**
-  https://x.com/ring_hyacinth
-- **X：Simon Lee (@simonxxoo)**
-  https://x.com/simonxxoo
-
----
-
-## IX. 2026-03 増分アップデート（原版に追記）
-
-> 本節は「追加・変更点」のみを記録します。その他の構成は原版のままです。
-
-### A) 部屋リフォーム用の画像生成モデル推奨（新規）
-
-「引っ越し / 仲介探し」フローでは、独自の Gemini API を接続し、以下を優先することを推奨します：
-
-1. **gemini nanobanana pro**
-2. **gemini nanobanana 2**
-
-他モデルは「部屋構造の保持 + スタイル一貫性」で期待値に届かない場合があります。
-
-推奨設定：
-
-- `GEMINI_API_KEY`
-- `GEMINI_MODEL`（推奨：`nanobanana-pro` または `nanobanana-2`）
-
-ランタイム設定エンドポイント：
-- `GET /config/gemini`
-- `POST /config/gemini`
-
-API key が未設定の場合、サイドバーに入力入口が表示され、ユーザーがその場で入力して再試行できます。
-
-### B) アセット編集サイドバーのパスコード（新規）
-
-サイドバーではレイアウト・装飾・デフォルト位置を変更できます。
-
-現在の初期値：
-- `ASSET_DRAWER_PASS=1234`
-
-推奨案内文：
-1. まずはデフォルト `1234` で体験可能；
-2. パスワード変更はいつでも相談可能；
-3. できるだけ早く強いパスワードへ変更推奨。
-
-例：
+### 5) 公開アクセス（任意）
 
 ```bash
-export ASSET_DRAWER_PASS="your-strong-pass"
+cloudflared tunnel --url http://127.0.0.1:19000
 ```
 
-必要性：
-- 公開リンクを知っている第三者によるレイアウト/素材改変を防ぐため。
+`https://xxx.trycloudflare.com` のリンクを共有するだけで OK。
 
-### C) インストール成功後にオーナーへ伝える3点（新規）
+### 6) インストール確認（任意）
 
-1. **一時公開リンク**
-   - `trycloudflare` の一時リンクをオーナーへ共有。
-   - 後で独自ドメインへ移行できることを案内。
+```bash
+python3 scripts/smoke_test.py --base-url http://127.0.0.1:19000
+```
 
-2. **部屋リフォーム入口**
-   - 「装修房间」から開始できることを案内。
-   - 初期パスワードは `1234`。
-   - 変更希望があればいつでもサポート可能。
-   - 強固なパスワードへの変更を推奨。
-
-3. **画像 API 設定**
-   - 画像生成にはユーザー自身の API を使用。
-   - 現在は Gemini 公式 API 形式/アドレスに対応。
-   - 他 API へ切替時は、先に API ドキュメント共有を依頼してから適配。
-
-### D) 実行時ステータス運用の推奨（新規）
-
-Agent はステータスを能動的に更新することを推奨：
-
-1. タスク着手前に `writing / researching / executing` へ切替；
-2. タスク完了後にまず `idle` へ戻してから待機。
-
-これにより、オフィス看板上の状態がより自然で連続的に見えます。
-
-### E) 美術・著作権表記の更新（重要）
-
-今回の重制の重点の一つは、美術アセットシステムの刷新（大規模置換 + 命名/索引再構築）です。
-
-維持する原則：
-
-- コードロジック：MIT
-- 美術アセット：商用不可（学習/デモ/共有用途のみ）
+すべてのチェックが `OK` と表示されればデプロイ成功です。
 
 ---
 
+## 🦞 OpenClaw 連携
 
-### F) 2026-03-04 P0/P1 セキュリティ・安定性アップデート（新規）
+> 以下は [OpenClaw](https://github.com/openclaw/openclaw) ユーザー向けの内容です。OpenClaw を使用していない場合はスキップしてください。
 
-本アップデートは、**本番運用の安定性**と**状態同期の信頼性**を高めることを目的に、既存機能を維持したまま以下を実施しました。
+### ステータス自動同期
 
-1. **P0 セキュリティ基盤**
-   - 本番モードでの安全チェックを追加（弱い secret / パスワードを拒否）
-   - Session Cookie 設定を強化
-   - デプロイ前検査 `scripts/security_check.py` を追加
+`SOUL.md`（またはエージェント設定ファイル）に以下のルールを追加すると、Agent がステータスを自動で更新します：
 
-2. **P1 構造改善（挙動変更なし）**
-   - backend を `security_utils.py` / `memo_utils.py` / `store_utils.py` に分割
-   - `app.py` の結合度を下げ、保守性を向上
+```markdown
+## Star Office ステータス同期ルール
+- タスク開始時：`python3 set_state.py <状態> "<説明>"` を実行してから作業開始
+- タスク完了時：`python3 set_state.py idle "待機中"` を実行してから返答
+```
 
-3. **状態同期・UX 改善**
-   - 状態ソース読み取り優先順位を修正
-   - stale 状態の自動 `idle` 復帰を追加（偽作業中を低減）
-   - 初期表示体験を改善（スケルトン表示、非重要初期化の遅延）
+**6 種類のステータス → 3 つのエリア：**
 
-4. **サービス安定性修正**
-   - `star-office-ui.service`（18888）の常駐動作を統一・安定化
-   - `star-office-push.service` との連携を改善し、502 リスクを低減
+| ステータス | オフィスエリア | 使用場面 |
+|-----------|--------------|---------|
+| `idle` | 🛋 休憩エリア（ソファ） | 待機 / タスク完了 |
+| `writing` | 💻 ワークエリア（デスク） | コーディング / ドキュメント作成 |
+| `researching` | 💻 ワークエリア | 検索 / リサーチ |
+| `executing` | 💻 ワークエリア | コマンド実行 / タスク処理 |
+| `syncing` | 💻 ワークエリア | データ同期 / プッシュ |
+| `error` | 🐛 バグコーナー | エラー / デバッグ |
 
-> 詳細は `docs/UPDATE_REPORT_2026-03-04_P0_P1.md` を参照してください。
+### 他の Agent をオフィスに招待
 
-## プロジェクト構成（簡易）
+**Step 1：join key を準備**
+
+バックエンドを初回起動するとき、カレントディレクトリに `join-keys.json` が存在しない場合は、`join-keys.sample.json` を元にランタイム用の `join-keys.json` が自動生成されます（例として `ocj_example_team_01` などのサンプル key が含まれます）。生成された `join-keys.json` を編集して key を追加・変更・削除できます。各 key はデフォルトで最大 3 名まで同時接続できます。
+
+**Step 2：ゲストにプッシュスクリプトを実行してもらう**
+
+ゲストは `office-agent-push.py` をダウンロードし、3 つの変数を入力するだけ：
+
+```python
+JOIN_KEY = "ocj_starteam02"          # あなたが割り当てたキー
+AGENT_NAME = "太郎のロブスター"        # 表示名
+OFFICE_URL = "https://office.hyacinth.im"  # あなたのオフィス URL
+```
+
+```bash
+python3 office-agent-push.py
+```
+
+スクリプトが自動で参加し、15 秒ごとにステータスをプッシュします。ゲストがダッシュボードに表示され、状態に応じて該当エリアに移動します。
+
+**Step 3（任意）：ゲストも Skill をインストール**
+
+ゲストは `frontend/join-office-skill.md` を Skill として使うこともできます。Agent が設定とプッシュを自動で行います。
+
+> 詳しいゲスト参加手順は [`frontend/join-office-skill.md`](./frontend/join-office-skill.md) を参照。
+
+---
+
+## 📡 API リファレンス
+
+| エンドポイント | 説明 |
+|--------------|------|
+| `GET /health` | ヘルスチェック |
+| `GET /status` | メイン Agent のステータス取得 |
+| `POST /set_state` | メイン Agent のステータス設定 |
+| `GET /agents` | 全 Agent リスト取得 |
+| `POST /join-agent` | ゲスト参加 |
+| `POST /agent-push` | ゲストステータスプッシュ |
+| `POST /leave-agent` | ゲスト退出 |
+| `GET /yesterday-memo` | 昨日メモ取得 |
+| `GET /config/gemini` | Gemini API 設定取得 |
+| `POST /config/gemini` | Gemini API 設定変更 |
+| `GET /assets/generate-rpg-background/poll` | 画像生成の進捗確認 |
+
+---
+
+## 🖥 デスクトップペット版（任意）
+
+`desktop-pet/` ディレクトリには **Tauri** ベースのデスクトップラッパーが含まれており、ピクセルオフィスを透明ウィンドウのデスクトップペットにできます。
+
+```bash
+cd desktop-pet
+npm install
+npm run dev
+```
+
+- 起動時に Python バックエンドを自動起動
+- デフォルトで `http://127.0.0.1:19000/?desktop=1` を表示
+- 環境変数でプロジェクトパスや Python パスをカスタマイズ可能
+
+> ⚠️ これは**オプションの実験的機能**であり、現在は主に macOS で開発・テストされています。詳細は [`desktop-pet/README.md`](./desktop-pet/README.md) を参照。
+>
+> 🙏 デスクトップペット版は [@Zhaohan-Wang](https://github.com/Zhaohan-Wang) が独自に開発しました。貢献に感謝します！
+
+---
+
+## 🎨 アート資産とライセンス
+
+### 資産の出典
+
+ゲストキャラクターのアニメーションには **LimeZu** のフリー素材を使用しています：
+- [Animated Mini Characters 2 (Platformer) [FREE]](https://limezu.itch.io/animated-mini-characters-2-platform-free)
+
+再配布やデモの際は出典を明記し、原作者のライセンス条項に従ってください。
+
+### ライセンス
+
+- **コード / ロジック：MIT**（[`LICENSE`](./LICENSE) を参照）
+- **アート資産：非商用のみ**（学習 / デモ / 共有用途）
+
+> 商用利用の場合は、すべてのアート資産をオリジナル素材に差し替えてください。
+
+---
+
+## 📝 更新履歴
+
+| 日付 | 概要 | 詳細 |
+|------|------|------|
+| 2026-03-06 | 🔌 デフォルトポート変更 — OpenClaw Browser Control との競合を避けるため、バックエンドの既定ポートを 18791 から 19000 に変更。スクリプト、デスクトップシェル、ドキュメントの既定値も同期更新 | [`docs/CHANGELOG_2026-03.md`](./docs/CHANGELOG_2026-03.md) |
+| 2026-03-05 | 📱 安定性修正 — CDN キャッシュ修正、画像生成非同期化、モバイルサイドバー UX 改善、join key 有効期限・同時接続制御 | [`docs/UPDATE_REPORT_2026-03-05.md`](./docs/UPDATE_REPORT_2026-03-05.md) |
+| 2026-03-04 | 🔒 P0/P1 セキュリティ強化 — 弱パスワード拒否、バックエンド分割、stale ステータス自動 idle 復帰、スケルトンローディング | [`docs/UPDATE_REPORT_2026-03-04_P0_P1.md`](./docs/UPDATE_REPORT_2026-03-04_P0_P1.md) |
+| 2026-03-03 | 📋 オープンソース公開チェックリスト完了 | [`docs/OPEN_SOURCE_RELEASE_CHECKLIST.md`](./docs/OPEN_SOURCE_RELEASE_CHECKLIST.md) |
+| 2026-03-01 | 🎉 **v2 リビルド公開** — 3 言語対応、資産管理システム、AI 画像生成による模様替え、アート資産全面刷新 | [`docs/FEATURES_NEW_2026-03-01.md`](./docs/FEATURES_NEW_2026-03-01.md) |
+
+---
+
+## 📁 プロジェクト構成
 
 ```text
-star-office-ui/
-  backend/
-    app.py
-    requirements.txt
-    run.sh
-  frontend/
-    index.html
-    join.html
-    invite.html
-    layout.js
-    ...assets
-  docs/
-    screenshots/
-  office-agent-push.py
-  set_state.py
-  state.sample.json
-  join-keys.json
-  SKILL.md
-  README.md
-  README.en.md
-  README.ja.md
-  LICENSE
+Star-Office-UI/
+├── backend/            # Flask バックエンド
+│   ├── app.py
+│   ├── requirements.txt
+│   └── run.sh
+├── frontend/           # フロントエンドページ & 資産
+│   ├── index.html
+│   ├── join.html
+│   ├── invite.html
+│   └── layout.js
+├── desktop-pet/        # Tauri デスクトップラッパー（任意）
+├── docs/               # ドキュメント & スクリーンショット
+│   └── screenshots/
+├── office-agent-push.py  # ゲストプッシュスクリプト
+├── set_state.py          # ステータス切替スクリプト
+├── state.sample.json     # 状態ファイルテンプレート
+├── join-keys.sample.json # Join Key テンプレート（起動時に join-keys.json を生成）
+├── SKILL.md              # OpenClaw Skill
+└── LICENSE               # MIT ライセンス
 ```
+
+---
+
+## ⭐ Star History
+
+[![Star History Chart](https://api.star-history.com/image?repos=ringhyacinth/Star-Office-UI&type=date&legend=top-left)](https://www.star-history.com/?repos=ringhyacinth%2FStar-Office-UI&type=date&legend=top-left)

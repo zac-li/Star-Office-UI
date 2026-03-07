@@ -66,6 +66,18 @@ _last_home_rotate_at = 0
 ASSET_DEFAULTS_FILE = os.path.join(ROOT_DIR, "asset-defaults.json")
 RUNTIME_CONFIG_FILE = os.path.join(ROOT_DIR, "runtime-config.json")
 
+# Canonical agent states: single source of truth for validation and mapping
+VALID_AGENT_STATES = frozenset({"idle", "writing", "researching", "executing", "syncing", "error", "orchestrating"})
+WORKING_STATES = frozenset({"writing", "researching", "executing", "orchestrating"})  # subset used for auto-idle TTL
+STATE_TO_AREA_MAP = {
+    "idle": "breakroom",
+    "writing": "writing",
+    "researching": "writing",
+    "executing": "writing",
+    "syncing": "writing",
+    "error": "error",
+}
+
 
 app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="/static")
 app.secret_key = os.getenv("FLASK_SECRET_KEY") or os.getenv("STAR_OFFICE_SECRET") or "star-office-dev-secret-change-me"
@@ -80,6 +92,11 @@ app.config.update(
 
 # Guard join-agent critical section to enforce per-key concurrency under parallel requests
 join_lock = threading.Lock()
+
+# Async background task registry for long-running operations (e.g. image generation)
+# Avoids Cloudflare 524 timeout (100s limit) by letting frontend poll for completion.
+_bg_tasks = {}  # task_id -> {"status": "pending"|"done"|"error", "result": ..., "error": ..., "created_at": ...}
+_bg_tasks_lock = threading.Lock()
 
 # Generate a version timestamp once at server startup for cache busting
 VERSION_TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -109,10 +126,11 @@ def _require_asset_editor_auth():
 def add_no_cache_headers(response):
     """Apply cache policy by path:
     - HTML/API/state: no-cache (always fresh)
-    - /static assets: long cache (filenames are versioned with ?v=VERSION_TIMESTAMP)
+    - /static assets (2xx only): long cache (filenames are versioned with ?v=VERSION_TIMESTAMP)
+    - /static assets (non-2xx, e.g. 404): no-cache to prevent CDN from caching errors
     """
     path = (request.path or "")
-    if path.startswith('/static/'):
+    if path.startswith('/static/') and 200 <= response.status_code < 300:
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
         response.headers.pop("Pragma", None)
         response.headers.pop("Expires", None)
@@ -156,8 +174,7 @@ def load_state():
         ttl = int(state.get("ttl_seconds", 300))
         updated_at = state.get("updated_at")
         s = state.get("state", "idle")
-        working_states = {"writing", "researching", "executing", "orchestrating"}
-        if updated_at and s in working_states:
+        if updated_at and s in WORKING_STATES:
             # tolerate both with/without timezone
             dt = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
             # Use UTC for aware datetimes; local time for naive.
@@ -526,9 +543,9 @@ def _animated_to_spritesheet(
 
 
 def normalize_agent_state(s):
-    """归一化状态，提高兼容性。
-    兼容输入：working/busy → writing; run/running → executing; sync → syncing; research → researching.
-    未识别默认返回 idle.
+    """Normalize agent state for compatibility.
+    Maps synonyms (e.g. working/busy -> writing, run/running -> executing) into VALID_AGENT_STATES.
+    Returns 'idle' for unknown values.
     """
     if not s:
         return 'idle'
@@ -543,9 +560,8 @@ def normalize_agent_state(s):
         return 'researching'
     if s_lower in {'orchestrate', 'orchestrating', 'coordinate'}:
         return 'orchestrating'
-    if s_lower in {'idle', 'writing', 'researching', 'executing', 'syncing', 'error', 'orchestrating'}:
+    if s_lower in VALID_AGENT_STATES:
         return s_lower
-    # 默认 fallback
     return 'idle'
 
 
@@ -913,6 +929,16 @@ def join_agent():
             if not key_item:
                 return jsonify({"ok": False, "msg": "接入密钥无效"}), 403
 
+            # Key-level expiration check
+            key_expires_at_str = key_item.get("expiresAt")
+            if key_expires_at_str:
+                try:
+                    key_expires_at = datetime.fromisoformat(key_expires_at_str)
+                    if datetime.now() > key_expires_at:
+                        return jsonify({"ok": False, "msg": "该接入密钥已过期，活动已结束 🎉"}), 403
+                except Exception:
+                    pass
+
             agents = load_agents_state()
 
             # 并发上限：同一个 key “同时在线”最多 3 个。
@@ -1097,14 +1123,23 @@ def agent_push():
         if not agent_id or not join_key or not state:
             return jsonify({"ok": False, "msg": "缺少 agentId/joinKey/state"}), 400
 
-        valid_states = {"idle", "writing", "researching", "executing", "syncing", "error", "orchestrating"}
+
         state = normalize_agent_state(state)
 
         keys_data = load_join_keys()
         key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
         if not key_item:
             return jsonify({"ok": False, "msg": "joinKey 无效"}), 403
-        # key 可复用：不再做 used/usedByAgentId 绑定校验
+
+        # Key-level expiration check
+        key_expires_at_str = key_item.get("expiresAt")
+        if key_expires_at_str:
+            try:
+                key_expires_at = datetime.fromisoformat(key_expires_at_str)
+                if datetime.now() > key_expires_at:
+                    return jsonify({"ok": False, "msg": "该接入密钥已过期，活动已结束 🎉"}), 403
+            except Exception:
+                pass
 
 
         agents = load_agents_state()
@@ -1181,7 +1216,11 @@ def get_agent_tokens():
 @app.route("/health", methods=["GET"])
 def health():
     """Health check"""
-    return jsonify({"status": "ok", "timestamp": datetime.now().isoformat()})
+    return jsonify({
+        "status": "ok",
+        "service": "star-office-ui",
+        "timestamp": datetime.now().isoformat(),
+    })
 
 
 @app.route("/yesterday-memo", methods=["GET"])
@@ -1240,8 +1279,7 @@ def set_state_endpoint():
         state = load_state()
         if "state" in data:
             s = data["state"]
-            valid_states = {"idle", "writing", "researching", "executing", "syncing", "error", "orchestrating"}
-            if s in valid_states:
+            if s in VALID_AGENT_STATES:
                 state["state"] = s
         if "detail" in data:
             state["detail"] = data["detail"]
@@ -1291,22 +1329,10 @@ def assets_list():
     return jsonify({"ok": True, "count": len(items), "items": items})
 
 
-@app.route("/assets/generate-rpg-background", methods=["POST"])
-def assets_generate_rpg_background():
-    """Generate a new RPG-themed background and replace office_bg_small.webp."""
-    guard = _require_asset_editor_auth()
-    if guard:
-        return guard
+def _bg_generate_worker(task_id: str, custom_prompt: str, speed_mode: str):
+    """Background worker for RPG background generation."""
     try:
-        req = request.get_json(silent=True) or {}
-        custom_prompt = (req.get("prompt") or "").strip() if isinstance(req, dict) else ""
-        speed_mode = (req.get("speed_mode") or "quality").strip().lower() if isinstance(req, dict) else "quality"
-        if speed_mode not in {"fast", "quality"}:
-            speed_mode = "fast"
-
         target = FRONTEND_PATH / "office_bg_small.webp"
-        if not target.exists():
-            return jsonify({"ok": False, "msg": "office_bg_small.webp 不存在"}), 404
 
         # 覆盖前保留最近一次备份
         bak = target.with_suffix(target.suffix + ".bak")
@@ -1327,31 +1353,108 @@ def assets_generate_rpg_background():
         shutil.copy2(target, hist_file)
 
         st = target.stat()
-        return jsonify({
-            "ok": True,
-            "path": "office_bg_small.webp",
-            "size": st.st_size,
-            "history": os.path.relpath(hist_file, ROOT_DIR),
-            "speed_mode": speed_mode,
-            "msg": "已生成并替换 RPG 房间底图（已自动归档）",
-        })
+        with _bg_tasks_lock:
+            _bg_tasks[task_id] = {
+                "status": "done",
+                "result": {
+                    "ok": True,
+                    "path": "office_bg_small.webp",
+                    "size": st.st_size,
+                    "history": os.path.relpath(hist_file, ROOT_DIR),
+                    "speed_mode": speed_mode,
+                    "msg": "已生成并替换 RPG 房间底图（已自动归档）",
+                },
+            }
     except Exception as e:
         msg = str(e)
+        error_result = {"ok": False, "msg": msg}
         if msg == "MISSING_API_KEY":
-            return jsonify({"ok": False, "code": "MISSING_API_KEY", "msg": "Missing GEMINI_API_KEY or GOOGLE_API_KEY"}), 400
-        if msg == "API_KEY_REVOKED_OR_LEAKED":
-            return jsonify({"ok": False, "code": "API_KEY_REVOKED_OR_LEAKED", "msg": "API key is revoked or flagged as leaked. Please rotate to a new key."}), 400
-        if msg.startswith("MODEL_NOT_AVAILABLE"):
-            detail = ""
+            error_result["code"] = "MISSING_API_KEY"
+            error_result["msg"] = "Missing GEMINI_API_KEY or GOOGLE_API_KEY"
+        elif msg == "API_KEY_REVOKED_OR_LEAKED":
+            error_result["code"] = "API_KEY_REVOKED_OR_LEAKED"
+            error_result["msg"] = "API key is revoked or flagged as leaked. Please rotate to a new key."
+        elif msg.startswith("MODEL_NOT_AVAILABLE"):
+            error_result["code"] = "MODEL_NOT_AVAILABLE"
+            error_result["msg"] = "Configured model is not available for this API key/channel."
             if "::" in msg:
-                detail = msg.split("::", 1)[1]
-            return jsonify({
-                "ok": False,
-                "code": "MODEL_NOT_AVAILABLE",
-                "msg": "Configured model is not available for this API key/channel.",
-                "detail": detail,
-            }), 400
-        return jsonify({"ok": False, "msg": msg}), 500
+                error_result["detail"] = msg.split("::", 1)[1]
+        with _bg_tasks_lock:
+            _bg_tasks[task_id] = {"status": "error", "result": error_result}
+
+
+@app.route("/assets/generate-rpg-background", methods=["POST"])
+def assets_generate_rpg_background():
+    """Start async RPG background generation. Returns a task_id for polling."""
+    guard = _require_asset_editor_auth()
+    if guard:
+        return guard
+    try:
+        req = request.get_json(silent=True) or {}
+        custom_prompt = (req.get("prompt") or "").strip() if isinstance(req, dict) else ""
+        speed_mode = (req.get("speed_mode") or "quality").strip().lower() if isinstance(req, dict) else "quality"
+        if speed_mode not in {"fast", "quality"}:
+            speed_mode = "fast"
+
+        target = FRONTEND_PATH / "office_bg_small.webp"
+        if not target.exists():
+            return jsonify({"ok": False, "msg": "office_bg_small.webp 不存在"}), 404
+
+        # Pre-flight checks that can fail fast (before spawning thread)
+        runtime_cfg = load_runtime_config()
+        api_key = (runtime_cfg.get("gemini_api_key") or "").strip()
+        if not api_key:
+            return jsonify({"ok": False, "code": "MISSING_API_KEY", "msg": "Missing GEMINI_API_KEY or GOOGLE_API_KEY"}), 400
+        if not (os.path.exists(GEMINI_PYTHON) and os.path.exists(GEMINI_SCRIPT)):
+            return jsonify({"ok": False, "msg": "生图脚本环境缺失：gemini-image-generate 未安装"}), 500
+
+        # Check if another generation is already running
+        with _bg_tasks_lock:
+            for tid, task in _bg_tasks.items():
+                if task.get("status") == "pending":
+                    return jsonify({"ok": True, "async": True, "task_id": tid, "msg": "已有生图任务进行中，请等待完成"}), 200
+
+        # Create async task
+        import string as _string
+        task_id = "gen_" + str(int(datetime.now().timestamp() * 1000)) + "_" + "".join(random.choices(_string.ascii_lowercase + _string.digits, k=4))
+        with _bg_tasks_lock:
+            _bg_tasks[task_id] = {"status": "pending", "created_at": datetime.now().isoformat()}
+
+        t = threading.Thread(target=_bg_generate_worker, args=(task_id, custom_prompt, speed_mode), daemon=True)
+        t.start()
+
+        return jsonify({"ok": True, "async": True, "task_id": task_id, "msg": "生图任务已启动，请通过 task_id 轮询结果"})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/generate-rpg-background/poll", methods=["GET"])
+def assets_generate_rpg_background_poll():
+    """Poll async generation task status."""
+    guard = _require_asset_editor_auth()
+    if guard:
+        return guard
+    task_id = (request.args.get("task_id") or "").strip()
+    if not task_id:
+        return jsonify({"ok": False, "msg": "缺少 task_id"}), 400
+    with _bg_tasks_lock:
+        task = _bg_tasks.get(task_id)
+    if not task:
+        return jsonify({"ok": False, "msg": "任务不存在"}), 404
+    status = task.get("status", "pending")
+    if status == "pending":
+        return jsonify({"ok": True, "status": "pending", "msg": "生图进行中..."})
+    elif status == "done":
+        # Clean up task after delivering result
+        with _bg_tasks_lock:
+            _bg_tasks.pop(task_id, None)
+        return jsonify({"ok": True, "status": "done", **task.get("result", {})})
+    else:
+        with _bg_tasks_lock:
+            _bg_tasks.pop(task_id, None)
+        result = task.get("result", {})
+        code = 400 if result.get("code") else 500
+        return jsonify({"ok": False, "status": "error", **result}), code
 
 
 @app.route("/assets/restore-reference-background", methods=["POST"])
@@ -1945,19 +2048,23 @@ def assets_upload():
 
 
 if __name__ == "__main__":
-    raw_port = os.environ.get("STAR_BACKEND_PORT", "18791")
+    raw_port = os.environ.get("STAR_BACKEND_PORT", "19000")
     try:
         backend_port = int(raw_port)
     except ValueError:
-        backend_port = 18791
+        backend_port = 19000
     if backend_port <= 0:
-        backend_port = 18791
+        backend_port = 19000
 
     print("=" * 50)
     print("Star Office UI - Backend State Service")
     print("=" * 50)
     print(f"State file: {STATE_FILE}")
     print(f"Listening on: http://0.0.0.0:{backend_port}")
+    if backend_port != 19000:
+        print(f"(Port override: set STAR_BACKEND_PORT to change; current: {raw_port})")
+    else:
+        print("(Set STAR_BACKEND_PORT to use a different port, e.g. 3009)")
     mode = "production" if is_production_mode() else "development"
     print(f"Mode: {mode}")
     if is_production_mode():

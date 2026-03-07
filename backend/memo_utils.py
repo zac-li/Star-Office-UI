@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Memo extraction helpers for Star Office backend.
 
-P1 step: extraction without behavior change.
+Reads and sanitizes daily memo content from memory/*.md for the yesterday-memo API.
 """
 
 from __future__ import annotations
@@ -12,22 +12,18 @@ import re
 
 
 def get_yesterday_date_str() -> str:
-    """获取昨天的日期字符串 YYYY-MM-DD"""
+    """Return yesterday's date as YYYY-MM-DD."""
     yesterday = datetime.now() - timedelta(days=1)
     return yesterday.strftime("%Y-%m-%d")
 
 
 def sanitize_content(text: str) -> str:
-    """清理内容，保护隐私"""
-    # 移除 OpenID、User ID 等
+    """Redact PII and sensitive patterns (OpenID, paths, IPs, email, phone) for safe display."""
     text = re.sub(r'ou_[a-f0-9]+', '[用户]', text)
     text = re.sub(r'user_id="[^"]+"', 'user_id="[隐藏]"', text)
-
-    # 移除 IP 地址、路径等敏感信息
     text = re.sub(r'/root/[^"\s]+', '[路径]', text)
     text = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', '[IP]', text)
 
-    # 移除电话号码、邮箱等
     text = re.sub(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', '[邮箱]', text)
     text = re.sub(r'1[3-9]\d{9}', '[手机号]', text)
 
@@ -35,7 +31,7 @@ def sanitize_content(text: str) -> str:
 
 
 def extract_memo_from_file(file_path: str) -> str:
-    """从 memory 文件中提取适合展示的 memo 内容（睿智风格的总结）"""
+    """Extract display-safe memo text from a memory markdown file; sanitizes and truncates with a short fallback."""
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
@@ -116,5 +112,5 @@ def extract_memo_from_file(file_path: str) -> str:
         return "\n".join(result).strip()
 
     except Exception as e:
-        print(f"提取 memo 失败: {e}")
+        print(f"extract_memo_from_file failed: {e}")
         return "「昨日记录加载失败」\n\n「往者不可谏，来者犹可追。」"

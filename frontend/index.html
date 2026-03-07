@@ -247,6 +247,18 @@
             text-shadow: 0 0 6px rgba(255,80,80,0.4);
         }
 
+        #asset-drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000005;
+            display: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #asset-drawer-backdrop.open {
+            display: block;
+        }
+
         #asset-drawer {
             display: none !important;
         }
@@ -1144,11 +1156,24 @@
                 padding: 6px 8px !important;
             }
 
+            body.drawer-open {
+                overflow: hidden !important;
+                position: fixed;
+                width: 100%;
+                touch-action: none;
+            }
+
             #asset-drawer {
                 width: 92vw;
                 max-width: 92vw;
+                height: 100vh;
+                height: 100dvh;
             }
-            #asset-drawer-body { padding: 8px; }
+            #asset-drawer-body {
+                padding: 8px;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
+            }
             #asset-list {
                 display: flex;
                 flex-direction: column;
@@ -1253,6 +1278,7 @@
         </div>
     </div>
 
+    <div id="asset-drawer-backdrop" onclick="toggleAssetDrawer(false)"></div>
     <aside id="asset-drawer">
         <div id="asset-drawer-header">
             <span>装修房间 · 资产侧边栏</span>
@@ -1351,7 +1377,7 @@
         <button id="lang-btn-cn" onclick="setUILanguage('zh')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">CN</button>
     </div>
 
-    <script src="/static/vendor/phaser-3.80.1.min.js"></script>
+    <script src="/static/vendor/phaser-3.80.1.min.js?v={{VERSION_TIMESTAMP}}"></script>
     <script>
         // 简易中英文切换
         let uiLang = localStorage.getItem('uiLang') || 'en';
@@ -1797,6 +1823,7 @@
             saul: '⚖️ Saul',
             kim: '🃏 Kim',
             peter: '🐣 Peter',
+            cthulhu: '🐙 Cthulhu',
         };
 
         let _tokenPeriod = 'today';
@@ -3068,6 +3095,58 @@ function toggleBrokerPanel() {
             setTimeout(() => el.classList.remove('is-done'), holdMs);
         }
 
+        // Async generation: start task then poll for result (avoids Cloudflare 524 timeout)
+        async function _startAndPollGeneration(body, out, progressMsg) {
+            const res = await fetch('/assets/generate-rpg-background', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (!data.ok) return data;
+            if (!data.async || !data.task_id) return data; // sync fallback (shouldn't happen)
+
+            // Poll for completion
+            const taskId = data.task_id;
+            const maxPollTime = 300000; // 5 minutes max
+            const pollInterval = 3000;  // 3 seconds
+            const startTime = Date.now();
+            let dots = 0;
+
+            while (Date.now() - startTime < maxPollTime) {
+                await new Promise(r => setTimeout(r, pollInterval));
+                dots = (dots + 1) % 4;
+                const elapsed = Math.round((Date.now() - startTime) / 1000);
+                out.textContent = progressMsg + '（已等待 ' + elapsed + '秒）' + '.'.repeat(dots);
+                try {
+                    const pollRes = await fetch('/assets/generate-rpg-background/poll?task_id=' + encodeURIComponent(taskId));
+                    const pollData = await pollRes.json();
+                    if (pollData.status === 'pending') continue;
+                    return pollData; // done or error
+                } catch (pollErr) {
+                    // Network error during poll, keep trying
+                    continue;
+                }
+            }
+            return { ok: false, msg: '生图超时（超过5分钟），请重试' };
+        }
+
+        function _handleGenError(data, out) {
+            if (data.code === 'MISSING_API_KEY') {
+                out.textContent = t('brokerMissingKey');
+                const box = document.getElementById('asset-gemini-config');
+                if (box) box.style.display = 'block';
+            } else if (data.code === 'API_KEY_REVOKED_OR_LEAKED') {
+                out.textContent = '❌ 当前 API Key 已失效/疑似泄露，请更换新 Key 后重试';
+                const box = document.getElementById('asset-gemini-config');
+                if (box) box.style.display = 'block';
+            } else if (data.code === 'MODEL_NOT_AVAILABLE') {
+                out.textContent = '❌ 当前模型在此通道不可用，请切换可用模型后重试' + (data.detail ? ('\n\n详情：' + data.detail) : '');
+            } else {
+                out.textContent = `❌ 生成失败：${data.msg || 'unknown error'}`;
+            }
+        }
+
         async function generateCustomRpgBackground() {
             const brokerBtn = document.querySelector('#asset-broker-row .btn-broker');
             flashButtonActive(brokerBtn);
@@ -3078,30 +3157,16 @@ function toggleBrokerPanel() {
                 out.textContent = t('brokerNeedPrompt');
                 return;
             }
-            // 点击即刻显示遮罩，先于任何网络调用
             showRoomLoadingOverlay();
             out.textContent = t('brokerGenerating');
             try {
-                const res = await fetch('/assets/generate-rpg-background', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, speed_mode: speedMode })
-                });
-                const data = await res.json();
+                const data = await _startAndPollGeneration(
+                    { prompt, speed_mode: speedMode },
+                    out,
+                    '🏘️ 正在按中介方案生成底图'
+                );
                 if (!data.ok) {
-                    if (data.code === 'MISSING_API_KEY') {
-                        out.textContent = t('brokerMissingKey');
-                        const box = document.getElementById('asset-gemini-config');
-                        if (box) box.style.display = 'block';
-                    } else if (data.code === 'API_KEY_REVOKED_OR_LEAKED') {
-                        out.textContent = '❌ 当前 API Key 已失效/疑似泄露，请更换新 Key 后重试';
-                        const box = document.getElementById('asset-gemini-config');
-                        if (box) box.style.display = 'block';
-                    } else if (data.code === 'MODEL_NOT_AVAILABLE') {
-                        out.textContent = '❌ 当前模型在此通道不可用，请切换可用模型后重试' + (data.detail ? ('\n\n详情：' + data.detail) : '');
-                    } else {
-                        out.textContent = `❌ 生成失败：${data.msg || res.status}`;
-                    }
+                    _handleGenError(data, out);
                     return;
                 }
                 out.textContent = t('brokerDone');
@@ -3123,30 +3188,16 @@ function toggleBrokerPanel() {
             flashButtonActive(moveBtn);
             setWorkingStatus('正在搬新家');
             const out = document.getElementById('asset-move-result') || document.getElementById('asset-upload-result');
-            // 点击即刻显示遮罩，先于任何网络调用
             showRoomLoadingOverlay();
-            out.textContent = '🧳 正在打包行李，请稍后（约30~60秒）';
+            out.textContent = '🧳 正在打包行李，请稍后（约30~120秒）';
             try {
-                const res = await fetch('/assets/generate-rpg-background', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ speed_mode: speedMode })
-                });
-                const data = await res.json();
+                const data = await _startAndPollGeneration(
+                    { speed_mode: speedMode },
+                    out,
+                    '🧳 正在生成新房间'
+                );
                 if (!data.ok) {
-                    if (data.code === 'MISSING_API_KEY') {
-                        out.textContent = t('brokerMissingKey');
-                        const box = document.getElementById('asset-gemini-config');
-                        if (box) box.style.display = 'block';
-                    } else if (data.code === 'API_KEY_REVOKED_OR_LEAKED') {
-                        out.textContent = '❌ 当前 API Key 已失效/疑似泄露，请更换新 Key 后重试';
-                        const box = document.getElementById('asset-gemini-config');
-                        if (box) box.style.display = 'block';
-                    } else if (data.code === 'MODEL_NOT_AVAILABLE') {
-                        out.textContent = '❌ 当前模型在此通道不可用，请切换可用模型后重试' + (data.detail ? ('\n\n详情：' + data.detail) : '');
-                    } else {
-                        out.textContent = `❌ 生成失败：${data.msg || res.status}`;
-                    }
+                    _handleGenError(data, out);
                     return;
                 }
                 out.textContent = '✅ 已生成并替换底图，正在刷新房间...';
@@ -3397,12 +3448,26 @@ function toggleBrokerPanel() {
             }
         }
 
+        // 记录 body scroll 位置，drawer 关闭时恢复
+        let _drawerScrollY = 0;
+
         async function toggleAssetDrawer(force) {
             const drawer = document.getElementById('asset-drawer');
+            const backdrop = document.getElementById('asset-drawer-backdrop');
             const next = (typeof force === 'boolean') ? force : !assetDrawerOpen;
             assetDrawerOpen = next;
             drawer.classList.toggle('open', next);
+            if (backdrop) backdrop.classList.toggle('open', next);
+            // 移动端 body 锁定：打开时冻结滚动位置，关闭时恢复
+            if (next) {
+                _drawerScrollY = window.scrollY;
+                document.body.style.top = `-${_drawerScrollY}px`;
+            }
             document.body.classList.toggle('drawer-open', next);
+            if (!next) {
+                document.body.style.top = '';
+                window.scrollTo(0, _drawerScrollY);
+            }
 
             const openBtn = document.getElementById('btn-open-drawer');
             if (openBtn) {
@@ -3417,6 +3482,7 @@ function toggleBrokerPanel() {
                 bindAssetDrawerBackgroundDeselect();
                 await ensureGeminiConfigLoaded();
                 if (assetDrawerAuthed) {
+                    await applySavedPositionOverrides();
                     await refreshAssetDrawerList();
                     await renderHomeFavorites(false);
                     bindDrawerFileMeta();
@@ -3612,8 +3678,9 @@ function toggleBrokerPanel() {
             'gmt_mike':  { x: 1020, y: 378 },
             'gmt_saul':  { x: 425, y: 496 },
             'gmt_peter': { x: 160, y: 610 },
+            'gmt_cthulhu': { x: 820, y: 378 },
         };
-        // Fixed sprite assignments: 1=gray, 2=lightgreen, 3=yellow, 4=green, 5=red, 6=red
+        // Fixed sprite assignments: 1=gray, 2=lightgreen, 3=yellow, 4=green, 5=red, 6=red, 7=blue
         const AGENT_SPRITE_BY_KEY = {
             'gmt_gale':  4,  // green
             'gmt_jesse': 5,  // red
@@ -3621,6 +3688,7 @@ function toggleBrokerPanel() {
             'gmt_saul':  3,  // yellow
             'gmt_kim':   3,  // yellow
             'gmt_peter': 1,  // gray/blue original
+            'gmt_cthulhu': 7, // blue (deep sea entity)
         };
 
         function getAreaPoint(area, idx, agentId, joinKey) {
@@ -3841,6 +3909,7 @@ function toggleBrokerPanel() {
                 gmt_saul: ['分析研究中', '我认识一个人', 'Better Call Saul', '法律的灰色地带最有趣', '合同条款里藏着魔鬼', '信息就是弹药', '我有个更好的方案', 'It\u2019s all good, man.'],
                 gmt_kim: ['分析研究中', '证据链不能断', '每个细节都有法律意义', '先把事实理清楚', '我比你想的更了解规则', '数据不会说谎', '合规审查进行中', '认真的人不需要运气'],
                 gmt_peter: ['执行中', '始祖 Claw 在线', '我可是这里的精神领袖', '管道已启动', '永远的 OG', '默默干活，低调高效', '系统核心运转中', 'The original Claw.'],
+                gmt_cthulhu: ['Ph\u2019nglui mglw\u2019nafh Cthulhu', '深渊凝视着你', '在群星归位之时...', 'Iä! Iä! Cthulhu fhtagn!', '骰子已经掷出', '那不是死亡，是永恒的沉眠', 'Roll for sanity check.', 'The stars are almost right.'],
             };
             const agentData = guestAgents.find(a => a.agentId === id) || {};
             const agentState = agentData.state || 'idle';
@@ -4093,7 +4162,15 @@ function toggleBrokerPanel() {
                     console.warn('flowers 规格探测失败，使用默认 65x65', e);
                 }
 
-                applySavedPositionOverrides();
+                // Only fetch /assets/positions and /assets/defaults when user is authed,
+                // to avoid 401 Unauthorized on first load for new visitors (issue #54).
+                try {
+                    const authRes = await fetch('/assets/auth/status', { cache: 'no-store' });
+                    const authData = await authRes.json();
+                    if (authData && authData.ok && authData.authed) {
+                        await applySavedPositionOverrides();
+                    }
+                } catch (e) {}
             }, 600);
         }
 
