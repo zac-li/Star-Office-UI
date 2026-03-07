@@ -248,19 +248,7 @@
         }
 
         #asset-drawer {
-            position: fixed;
-            top: 0;
-            right: -320px;
-            width: 320px;
-            max-width: 92vw;
-            height: 100vh;
-            background: #111827;
-            border-left: 2px solid #22c55e;
-            box-shadow: -8px 0 24px rgba(0,0,0,0.45);
-            transition: right 0.25s ease;
-            z-index: 1000010;
-            display: flex;
-            flex-direction: column;
+            display: none !important;
         }
         #asset-drawer.open { right: 0; }
         #asset-drawer-header {
@@ -682,6 +670,7 @@
             filter: brightness(0.97);
         }
         /* 装修房间按钮使用像素精灵皮肤 */
+        #btn-open-drawer { display: none !important; }
         #control-bar #btn-open-drawer {
             background-image: url('/static/btn-open-drawer-sprite.png?v={{VERSION_TIMESTAMP}}') !important;
             background-color: transparent !important;
@@ -712,6 +701,83 @@
             filter: brightness(0.97);
         }
         /* Guest Agent 名单面板（右下角） */
+        #token-ranking-panel {
+            position: relative;
+            width: 390px;
+            background: #141722;
+            padding: 10px 10px 12px;
+            border-radius: 0;
+            border: 4px solid #0e1119;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow: hidden;
+        }
+        #token-ranking-title {
+            color: #ffd700;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 1px;
+            padding: 6px 0 10px;
+            border-bottom: 0;
+            margin-bottom: 0;
+        }
+        #token-ranking-header {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 4px 0 2px;
+            z-index: 1;
+        }
+        .token-tab {
+            font-family: 'ArkPixel', monospace;
+            font-size: 13px;
+            color: #64748b;
+            cursor: pointer;
+            padding: 2px 10px;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+        .token-tab:hover {
+            color: #94a3b8;
+        }
+        .token-tab.active {
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+        }
+        #token-ranking-list {
+            z-index: 1;
+        }
+        .token-rank-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 12px;
+            font-family: 'ArkPixel', monospace;
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+        .token-rank-row .rank-num {
+            color: #64748b;
+            width: 20px;
+        }
+        .token-rank-row .rank-name {
+            flex: 1;
+            margin-left: 4px;
+        }
+        .token-rank-row .rank-tokens {
+            color: #4ade80;
+            text-align: right;
+        }
+        .token-rank-row:first-child .rank-tokens {
+            color: #facc15;
+        }
+        .token-rank-row:first-child .rank-name {
+            color: #facc15;
+        }
+
         #guest-agent-panel {
             position: relative;
             width: 390px;
@@ -1155,6 +1221,19 @@
             </div>
         </div>
 
+        <!-- Token 排行榜 -->
+        <div id="token-ranking-panel">
+            <div id="token-ranking-title">Token消耗</div>
+            <div id="token-ranking-header">
+                <span class="token-tab active" data-period="today">Today</span>
+                <span class="token-tab" data-period="month">Month</span>
+                <span class="token-tab" data-period="total">All Time</span>
+            </div>
+            <div id="token-ranking-list">
+                <div style="color:#9ca3af;font-size:12px;text-align:center;padding:10px 0;">加载中...</div>
+            </div>
+        </div>
+
         <!-- Guest Agent 名单面板（右下角） -->
         <div id="guest-agent-panel">
             <div id="guest-agent-panel-title">访 客 列 表</div>
@@ -1278,7 +1357,7 @@
         let uiLang = localStorage.getItem('uiLang') || 'en';
         const I18N = {
             zh: {
-                controlTitle: 'Walt在干嘛',
+                controlTitle: 'Walt在干嘛', tokenTitle: 'Token消耗',
                 btnIdle: '待命', btnWork: '工作', btnSync: '同步', btnError: '报警', btnDecor: '装修房间',
                 drawerTitle: '装修房间 · 资产侧边栏', drawerClose: '关闭',
                 authTitle: '请输入装修验证码', authPlaceholder: '输入验证码', authVerify: '验证', authDefaultPassHint: '默认密码：1234（可随时让我帮你改，建议改成强密码）',
@@ -1306,7 +1385,7 @@
                 loadingOffice: '正在加载 Walter 的 🧪 Gray Matter Technologies...'
             },
             en: {
-                controlTitle: 'What\u2019s up with Walter',
+                controlTitle: 'What\u2019s up with Walter', tokenTitle: 'Token Consumption',
                 btnIdle: 'Idle', btnWork: 'Work', btnSync: 'Sync', btnError: 'Alert', btnDecor: 'Decorate Room',
                 drawerTitle: 'Decorate Room · Asset Sidebar', drawerClose: 'Close',
                 authTitle: 'Enter Decor Passcode', authPlaceholder: 'Enter passcode', authVerify: 'Verify', authDefaultPassHint: 'Default passcode: 1234 (ask me anytime to change it; stronger passcode recommended)',
@@ -1334,7 +1413,7 @@
                 loadingOffice: 'Loading Walter\'s 🧪 Gray Matter Technologies...'
             },
             ja: {
-                controlTitle: 'Walterの状態',
+                controlTitle: 'Walterの状態', tokenTitle: 'トークン消費',
                 btnIdle: '待機', btnWork: '作業', btnSync: '同期', btnError: '警報', btnDecor: '部屋を編集',
                 drawerTitle: '部屋編集・アセットサイドバー', drawerClose: '閉じる',
                 authTitle: '編集パスコードを入力', authPlaceholder: 'パスコード入力', authVerify: '認証', authDefaultPassHint: '初期パスコード：1234（いつでも変更を相談可。強固なパス推奨）',
@@ -1384,6 +1463,7 @@
             const setPh = (id, key) => { const el = document.getElementById(id); if (el) el.placeholder = t(key); };
 
             setText('control-bar-title', 'controlTitle');
+            setText('token-ranking-title', 'tokenTitle');
             setText('btn-state-idle', 'btnIdle');
             setText('btn-state-writing', 'btnWork');
             setText('btn-state-syncing', 'btnSync');
@@ -1613,20 +1693,20 @@
                 researching: ['我在挖证据链','让我把信息熬成结论','找到了：关键在这里','先把变量控制住','我在查：它为什么会这样','把直觉写成验证','先定位，再优化','别急，先画因果图'],
                 executing: ['执行中：不要眨眼','把任务切成小块逐个击破','开始跑 pipeline','一键推进：走你','让结果自己说话','先做最小可行，再做最美版本'],
                 syncing: ['同步中：把今天锁进云里','备份不是仪式，是安全感','写入中…别断电','把变更交给时间戳','云端对齐：咔哒','同步完成前先别乱动','把未来的自己从灾难里救出来','多一份备份，少一份后悔'],
-                orchestrating: ['运筹帷幄中','全局视角：每颗棋子都在位','协调各方，静候最优解','信息汇总，决策输出','把混乱变成秩序','指挥部在线','调度中：让每个 agent 各司其职','大局观开启'],
+                orchestrating: ['运筹帷幄中','我是那个敲门的人','全局在握，每颗棋子各就各位','帝国需要管理','化学反应正在进行','99.1% 纯度，不能再低了','指挥部在线','说出我的名字'],
                 error: ['警报响了：先别慌','我闻到 bug 的味道了','先复现，再谈修复','把日志给我，我会说人话','错误不是敌人，是线索','把影响面圈起来','先止血，再手术','我在：马上定位根因','别怕，这种我见多了','报警中：让问题自己现形'],
                 cat: ['喵~','咕噜咕噜…','尾巴摇一摇','晒太阳最开心','有人来看我啦','我是这个办公室的吉祥物','伸个懒腰','今天的罐罐准备好了吗','呼噜呼噜','这个位置视野最好']
             },
             en: {
-                idle: ['On standby: ears up.','I'm here, ready to roll.','Let's tidy the desk first.','Taking a quick brain breeze.','Efficient and elegant, as always.','Waiting for a more precise strike.','Coffee is warm, ideas too.','Giving you a quiet backstage buff.','Status: calm / charging.','Cat says: no rush, we're good.'],
-                writing: ['Focus mode on: do not disturb.','Let's clear the critical path first.','I'll make the complex simple.','Putting bugs in a cage.','Save first, then continue.','Every step should be rollback-safe.','Today's progress is tomorrow's confidence.','Converge first, then diverge.','Making the system more explainable.','Steady-this is winnable.'],
+                idle: ['On standby: ears up.','I’m here, ready to roll.','Let’s tidy the desk first.','Taking a quick brain breeze.','Efficient and elegant, as always.','Waiting for a more precise strike.','Coffee is warm, ideas too.','Giving you a quiet backstage buff.','Status: calm / charging.','Cat says: no rush, we’re good.'],
+                writing: ['Focus mode on: do not disturb.','Let’s clear the critical path first.','I’ll make the complex simple.','Putting bugs in a cage.','Save first, then continue.','Every step should be rollback-safe.','Today’s progress is tomorrow’s confidence.','Converge first, then diverge.','Making the system more explainable.','Steady-this is winnable.'],
                 researching: ['Digging the evidence chain.','Let me boil info into conclusions.','Found it: key clue here.','Control variables first.','Checking why this happens.','Turn intuition into verification.','Locate first, optimize next.','No rush-draw the causality map first.'],
-                executing: ['Executing-don't blink.','Split tasks, conquer one by one.','Pipeline is running.','One-click push: go go.','Let the results speak.','Build MVP first, then craft beauty.'],
-                syncing: ['Syncing: lock today into the cloud.','Backup is safety, not ceremony.','Writing… don't cut power.','Handing changes to timestamps.','Cloud alignment: click.','Don't shake it before sync finishes.','Saving future-us from disasters.','One more backup, one less regret.'],
+                executing: ['Executing-don’t blink.','Split tasks, conquer one by one.','Pipeline is running.','One-click push: go go.','Let the results speak.','Build MVP first, then craft beauty.'],
+                syncing: ['Syncing: lock today into the cloud.','Backup is safety, not ceremony.','Writing… don’t cut power.','Handing changes to timestamps.','Cloud alignment: click.','Don’t shake it before sync finishes.','Saving future-us from disasters.','One more backup, one less regret.'],
 
-                orchestrating: ['Orchestrating: every piece in position.','Big picture mode: activated.','Coordinating all agents.','Turning chaos into order.','Command center online.','Dispatching: each agent on task.','Strategic overview engaged.','Say my name.'],
-                error: ['Alarm on-stay calm.','I can smell a bug.','Reproduce first, then fix.','Give me logs; I'll translate.','Errors are clues, not enemies.','Circle the impact area first.','Stop the bleeding, then surgery.','On it: tracing root cause now.','Don't worry, seen this many times.','Alert mode: make the issue reveal itself.'],
-                cat: ['Meow~','Purr purr…','Tail wiggle activated.','Sunbathing is the best.','Someone came to see me!','I'm the office mascot.','Big stretch~','Is today's snack ready yet?','Rrrrr purr…','Best view spot secured.']
+                orchestrating: ['I am the one who knocks.','The empire business is running.','99.1% purity \u2014 nothing less.','Chemistry in progress.','Command center online.','Say my name.','The reaction is under control.','Every piece in position.'],
+                error: ['Alarm on-stay calm.','I can smell a bug.','Reproduce first, then fix.','Give me logs; I’ll translate.','Errors are clues, not enemies.','Circle the impact area first.','Stop the bleeding, then surgery.','On it: tracing root cause now.','Don’t worry, seen this many times.','Alert mode: make the issue reveal itself.'],
+                cat: ['Meow~','Purr purr…','Tail wiggle activated.','Sunbathing is the best.','Someone came to see me!','I’m the office mascot.','Big stretch~','Is today’s snack ready yet?','Rrrrr purr…','Best view spot secured.']
             },
             ja: {
                 idle: ['待機中：耳はピン。','ここにいるよ、いつでも開始OK。','まず机を整えよう。','ふー、頭に風を通す。','今日も上品に高効率で。','待つのは、より正確な一撃のため。','コーヒーも発想もまだ温かい。','裏側でそっとバフ中。','状態：静心 / 充電。','猫より：ゆっくりでも大丈夫。'],
@@ -1697,6 +1777,84 @@
         let guestAgents = [];
         let guestSprites = {}; // agentId -> {sprite, nameText}
         let guestBubbles = {}; // agentId -> bubble container
+        let guestTokenTexts = {}; // agentId -> token text object
+        let _agentTokenData = {}; // joinKey -> {total, today, month}
+        const TOKEN_FETCH_INTERVAL = 600000; // 10min
+
+        function formatTokens(n) {
+            if (n == null || n === 0) return '0';
+            if (n >= 1e9) return (n / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+            if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+            return String(n);
+        }
+
+        const AGENT_DISPLAY_NAMES = {
+            walter: '🧪 Walter',
+            gale: '⚗️ Gale',
+            jesse: '🌡 Jesse',
+            mike: '👓 Mike',
+            saul: '⚖️ Saul',
+            kim: '🃏 Kim',
+            peter: '🐣 Peter',
+        };
+
+        let _tokenPeriod = 'today';
+
+        // Tab click handler
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('token-tab')) {
+                document.querySelectorAll('.token-tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                _tokenPeriod = e.target.dataset.period;
+                updateTokenRanking();
+            }
+        });
+
+        function updateTokenRanking() {
+            const list = document.getElementById('token-ranking-list');
+            if (!list) return;
+            const entries = [];
+            for (const [name, data] of Object.entries(_agentTokenData)) {
+                if (name.startsWith('_') || typeof data !== 'object') continue;
+                entries.push({
+                    name,
+                    today: data.today || 0,
+                    month: data.month || 0,
+                    total: data.total || 0,
+                });
+            }
+            const key = _tokenPeriod;
+            entries.sort((a, b) => b[key] - a[key]);
+
+            if (entries.length === 0) {
+                list.innerHTML = '<div style="color:#9ca3af;font-size:12px;text-align:center;padding:10px 0;">暂无数据</div>';
+                return;
+            }
+
+            list.innerHTML = entries.map((e, i) => {
+                const displayName = AGENT_DISPLAY_NAMES[e.name] || e.name;
+                const val = e[key];
+                return '<div class="token-rank-row">' +
+                    '<span class="rank-num">' + (i + 1) + '</span>' +
+                    '<span class="rank-name">' + displayName + '</span>' +
+                    '<span class="rank-tokens">' + formatTokens(val) + '</span>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function fetchTokenData() {
+            fetch('/agent-tokens', { cache: 'no-store' })
+                .then(r => r.json())
+                .then(data => {
+                    _agentTokenData = data;
+                    updateTokenRanking();
+                })
+                .catch(() => {});
+        }
+        setInterval(fetchTokenData, TOKEN_FETCH_INTERVAL);
+        fetchTokenData();
+
         const GUEST_AVATARS = ['guest_role_1','guest_role_2','guest_role_3','guest_role_4','guest_role_5','guest_role_6'];
         let guestTweens = {};  // agentId -> {move, name}
         let hiddenDemoNames = new Set();
@@ -2770,7 +2928,7 @@ function toggleBrokerPanel() {
                     '正在等待旅程投递下一张门牌号……'
                 ],
                 en: [
-                    'Packing today's luggage of inspiration…',
+                    'Packing today’s luggage of inspiration…',
                     'Drawing the digital coordinates for the next stop…',
                     'Checking the destination of this drift…',
                     'Folding the office into portable mode…',
@@ -3675,8 +3833,19 @@ function toggleBrokerPanel() {
                 syncing: ['同步中，马上更新状态', '正在同步进度到系统', '数据同步中请稍候'],
                 error: ['我在 bug 区排查问题', '检测到异常，正在修复', '报警中，先定位再处理']
             };
-            const agentState = (guestAgents.find(a => a.agentId === id) || {}).state || 'idle';
-            const thoughts = statusThoughtsMap[agentState] || statusThoughtsMap.idle;
+            // Breaking Bad themed per-agent bubble texts
+            const agentThoughtsMap = {
+                gmt_gale: ['协助运维中', '完美的咖啡需要完美的温度', '我只是欣赏化学之美', '笔记已更新到最新版本', '系统对齐：精确到每一个分子', 'Major Tom to ground control', '数据之美不可言喻'],
+                gmt_jesse: ['执行中：别眨眼', 'Yeah science!', '下一批准备好了', '管道已启动，别碰', '先跑通，再优化', '按流程来，不许抄近路', '这批纯度够了', 'Let\u2019s cook.'],
+                gmt_mike: ['执行中：别废话', '我只做需要做的事', '半措施不行', '任务分配完毕，各就各位', '清理现场中', '干净利落，不留痕迹', '不要有半点差错', 'No half measures.'],
+                gmt_saul: ['分析研究中', '我认识一个人', 'Better Call Saul', '法律的灰色地带最有趣', '合同条款里藏着魔鬼', '信息就是弹药', '我有个更好的方案', 'It\u2019s all good, man.'],
+                gmt_kim: ['分析研究中', '证据链不能断', '每个细节都有法律意义', '先把事实理清楚', '我比你想的更了解规则', '数据不会说谎', '合规审查进行中', '认真的人不需要运气'],
+                gmt_peter: ['执行中', '始祖 Claw 在线', '我可是这里的精神领袖', '管道已启动', '永远的 OG', '默默干活，低调高效', '系统核心运转中', 'The original Claw.'],
+            };
+            const agentData = guestAgents.find(a => a.agentId === id) || {};
+            const agentState = agentData.state || 'idle';
+            const agentKey = agentData.joinKey || '';
+            const thoughts = agentThoughtsMap[agentKey] || statusThoughtsMap[agentState] || statusThoughtsMap.idle;
             const text = (demoVisitor && demoVisitor.bubbleText) ? demoVisitor.bubbleText : thoughts[Math.floor(Math.random() * thoughts.length)];
 
             if (guestBubbles[id]) {
@@ -3852,7 +4021,7 @@ function toggleBrokerPanel() {
                                     const lang = uiLang;
                                     const welcomeTexts = {
                                         zh: [`欢迎 ${newAgent.name} 来到办公室～`,`Hi ${newAgent.name}，一起开工吧`,`${newAgent.name} 已加入，欢迎！`],
-                                        en: [`Welcome ${newAgent.name} to the office!`,`Hi ${newAgent.name}, let's build something.`,`${newAgent.name} just joined - welcome!`],
+                                        en: [`Welcome ${newAgent.name} to the office!`,`Hi ${newAgent.name}, let’s build something.`,`${newAgent.name} just joined - welcome!`],
                                         ja: [`${newAgent.name} さん、オフィスへようこそ！`,`Hi ${newAgent.name}、一緒に進めよう。`,`${newAgent.name} さんが参加しました、歓迎！`]
                                     };
                                     const langPack = BUBBLE_TEXTS[lang] || BUBBLE_TEXTS.zh;
@@ -4562,8 +4731,6 @@ function toggleBrokerPanel() {
         }
 
         function applyVisualState(nextState) {
-            pendingDesiredState = null;
-            currentState = nextState;
             updateStatePills(nextState);
             // Idle: show Star idle animation (main character)
             if (nextState === 'idle') {
@@ -4647,7 +4814,7 @@ function toggleBrokerPanel() {
 
                         const nextState = normalizeState(data.state);
                         const stateInfo = STATES[nextState] || STATES.idle;
-                        // If we're mid-transition, don't restart the path every poll
+                        // If we’re mid-transition, don’t restart the path every poll
                         const changed = (pendingDesiredState === null) && (nextState !== currentState);
                         const nextLine = '[' + stateInfo.name + '] ' + (data.detail || '...');
                         // 不论 changed 与否，都按服务端最新状态强制一次视觉同步，避免动画卡旧状态
@@ -4661,21 +4828,12 @@ function toggleBrokerPanel() {
                             typewriterTarget = nextLine;
                             typewriterText = '';
                             typewriterIndex = 0;
-
                         } else {
                             if (!typewriterTarget || typewriterTarget !== nextLine) {
                                 typewriterTarget = nextLine;
                                 typewriterText = '';
                                 typewriterIndex = 0;
-
                             }
-                        }
-                    } else {
-                        if (!typewriterTarget || typewriterTarget !== nextLine) {
-                            typewriterTarget = nextLine;
-                            typewriterText = '';
-                            typewriterIndex = 0;
-                        }
                         }
                     } catch (err) {
                         console.error('fetchStatus apply error', err);

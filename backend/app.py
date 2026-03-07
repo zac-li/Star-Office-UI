@@ -813,55 +813,10 @@ if os.path.exists(RUNTIME_CONFIG_FILE):
 
 @app.route("/agents", methods=["GET"])
 def get_agents():
-    """Get full agents list (for multi-agent UI), with auto-cleanup on access"""
+    """Get full agents list (for multi-agent UI) — read-only, no cleanup on GET"""
     agents = load_agents_state()
-    now = datetime.now()
 
-    cleaned_agents = []
-    keys_data = load_join_keys()
-
-    for a in agents:
-        if a.get("isMain"):
-            cleaned_agents.append(a)
-            continue
-
-        auth_expires_at_str = a.get("authExpiresAt")
-        auth_status = a.get("authStatus", "pending")
-
-        # 1) 超时未批准自动 leave
-        if auth_status == "pending" and auth_expires_at_str:
-            try:
-                auth_expires_at = datetime.fromisoformat(auth_expires_at_str)
-                if now > auth_expires_at:
-                    key = a.get("joinKey")
-                    if key:
-                        key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == key), None)
-                        if key_item:
-                            key_item["used"] = False
-                            key_item["usedBy"] = None
-                            key_item["usedByAgentId"] = None
-                            key_item["usedAt"] = None
-                    continue
-            except Exception:
-                pass
-
-        # 2) 超时未推送自动离线（超过5分钟）
-        last_push_at_str = a.get("lastPushAt")
-        if auth_status == "approved" and last_push_at_str:
-            try:
-                last_push_at = datetime.fromisoformat(last_push_at_str)
-                age = (now - last_push_at).total_seconds()
-                if age > 300:  # 5分钟无推送自动离线
-                    a["authStatus"] = "offline"
-            except Exception:
-                pass
-
-        cleaned_agents.append(a)
-
-    save_agents_state(cleaned_agents)
-    save_join_keys(keys_data)
-
-    return jsonify(cleaned_agents)
+    return jsonify(agents)
 
 
 @app.route("/agent-approve", methods=["POST"])
@@ -1185,6 +1140,43 @@ def agent_push():
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)}), 500
 
+
+# --- Token tracking ---
+TOKENS_FILE = os.path.join(ROOT_DIR, "agent-tokens.json")
+
+def _load_tokens():
+    if os.path.exists(TOKENS_FILE):
+        try:
+            with open(TOKENS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+def _save_tokens(data):
+    with open(TOKENS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+_agent_tokens = _load_tokens()
+
+@app.route("/agent-tokens", methods=["POST"])
+def update_agent_tokens():
+    """Receive token usage data from external tracker script."""
+    try:
+        data = request.get_json(force=True)
+        if not data or not isinstance(data, dict):
+            return jsonify({"ok": False, "msg": "invalid data"}), 400
+        _agent_tokens.update(data)
+        _agent_tokens["_lastPush"] = datetime.now().isoformat()
+        _save_tokens(_agent_tokens)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+@app.route("/agent-tokens", methods=["GET"])
+def get_agent_tokens():
+    """Return current token usage for all agents."""
+    return jsonify(_agent_tokens)
 
 @app.route("/health", methods=["GET"])
 def health():

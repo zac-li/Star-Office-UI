@@ -1,0 +1,45 @@
+{
+  "walter": {
+    "total": 1872533,
+    "today": 0,
+    "month": 89675,
+    "updatedAt": "2026-03-05T07:00:10.611383"
+  },
+  "peter": {
+    "total": 91940,
+    "today": 0,
+    "month": 150,
+    "updatedAt": "2026-03-05T07:00:10.611383"
+  },
+  "kim": {
+    "total": 316890,
+    "today": 0,
+    "month": 0,
+    "updatedAt": "2026-03-05T07:00:10.611383"
+  },
+  "saul": {
+    "total": 143457,
+    "today": 0,
+    "month": 0,
+    "updatedAt": "2026-03-05T07:00:10.611383"
+  },
+  "gale": {
+    "total": 915638,
+    "today": 0,
+    "month": 60876,
+    "updatedAt": "2026-03-05T07:00:10.611383"
+  },
+  "mike": {
+    "total": 207916,
+    "today": 0,
+    "month": 0,
+    "updatedAt": "2026-03-05T07:00:10.611383"
+  },
+  "_lastPush": "2026-03-05T07:00:14.755469",
+  "jesse": {
+    "total": 223424,
+    "today": 0,
+    "month": 0,
+    "updatedAt": "2026-03-05T07:00:10.611383"
+  }
+}

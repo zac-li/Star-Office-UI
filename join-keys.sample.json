@@ -1,13 +1,10 @@
 {
   "keys": [
-    {
-      "key": "ocj_example_team_01",
-      "used": false,
-      "reusable": true,
-      "maxConcurrent": 3,
-      "usedBy": null,
-      "usedByAgentId": null,
-      "usedAt": null
-    }
+    {"key": "gmt_gale", "used": false, "reusable": true, "maxConcurrent": 3},
+    {"key": "gmt_peter", "used": false, "reusable": true, "maxConcurrent": 3},
+    {"key": "gmt_jesse", "used": false, "reusable": true, "maxConcurrent": 3},
+    {"key": "gmt_mike", "used": false, "reusable": true, "maxConcurrent": 3},
+    {"key": "gmt_saul", "used": false, "reusable": true, "maxConcurrent": 3},
+    {"key": "gmt_kim", "used": false, "reusable": true, "maxConcurrent": 3}
   ]
 }
